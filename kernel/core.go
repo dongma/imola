@@ -1,4 +1,4 @@
-package core
+package kernel
 
 import "net/http"
 
@@ -12,6 +12,6 @@ func NewCore() *Core {
 }
 
 // 框架核心结构实现Handler接口
-func (c *Core) ServeHttp(response http.ResponseWriter, request *http.Request) {
+func (c *Core) ServerHTTP(response http.ResponseWriter, request *http.Request) {
 	// todo
 }

@@ -1,15 +1,14 @@
 package main
 
 import (
-	"imola/core"
+	"imola/kernel"
 	"net/http"
 )
 
 func main() {
-	core := core.NewCore()
 	server := &http.Server{
-		Handler: core,
-		Addr:    ":8888",
+		Handler: kernel.NewCore(),
+		Addr:    "localhost:8888",
 	}
 	server.ListenAndServe()
 }

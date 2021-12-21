@@ -1,17 +1,31 @@
 package kernel
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
-// 框架的核心结构
+// Core represent core struct
 type Core struct {
+	router map[string]ControllerHandler
 }
 
-// 初始化框架核心结构
 func NewCore() *Core {
-	return &Core{}
+	return &Core{router: map[string]ControllerHandler{}}
 }
 
-// 框架核心结构实现Handler接口
-func (c *Core) ServerHTTP(response http.ResponseWriter, request *http.Request) {
-	// todo
+func (c *Core) Get(url string, handler ControllerHandler) {
+	c.router[url] = handler
+}
+
+func (c *Core) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	log.Println("enter Core#ServeHTTP method, start http server on 8888 port")
+	ctx := NewContext(request, response)
+
+	router := c.router["foo"]
+	if router == nil {
+		return
+	} 
+	log.Println("core.router startup, router /foo rest url to FooControllerHandler")
+	router(ctx)
 }

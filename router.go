@@ -1,10 +1,15 @@
 package main
 
 import (
+	"imola/api"
 	"imola/kernel"
 )
 
 func registerRouter(core *kernel.Core) {
-	// core.Get("foo", kernel.TimeoutHandler(FooControllerHandler, time.Second*1))
-	core.Get("foo", FooControllerHandler)
+	// 需求1+2: HTTP方法+静态路由匹配
+	core.Get("/user/login", api.UserLoginController)
+	subjectApi = core.Group("/subject")
+	{
+		subjectApi.Get("/add", api.SubjectAddController)
+	}
 }

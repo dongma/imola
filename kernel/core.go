@@ -8,43 +8,41 @@ import (
 
 // Core represent core struct
 type Core struct {
-	router map[string]map[string]ControllerHandler // 二级map结构
+	router map[string]*Tree // 二级map结构
 }
 
 func NewCore() *Core {
-	// 按请求方法定义二级map，并将其注册到一级map中
-	getRouter := map[string]ControllerHandler{}
-	postRouter := map[string]ControllerHandler{}
-	putRouter := map[string]ControllerHandler{}
-	deleteRouter := map[string]ControllerHandler{}
-
-	router := map[string]map[string]ControllerHandler{}
-	router["GET"] = getRouter
-	router["POST"] = postRouter
-	router["PUT"] = putRouter
-	router["DELETE"] = deleteRouter
+	router := map[string]*Tree{}
+	router["GET"] = NewTree()
+	router["POST"] = NewTree()
+	router["PUT"] = NewTree()
+	router["DELETE"] = NewTree()
 	return &Core{router: router}
 }
 
 // http method wrap，匹配Http请求方法并添加路由规则
 func (c *Core) Get(url string, handler ControllerHandler) {
-	upperUrl := strings.ToUpper(url)
-	c.router["GET"][upperUrl] = handler
+	if err := c.router["GET"].AddRouter(url, handler); err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 func (c *Core) Post(url string, handler ControllerHandler) {
-	upperUrl := strings.ToUpper(url)
-	c.router["POST"][upperUrl] = handler
+	if err := c.router["POST"].AddRouter(url, handler); err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 func (c *Core) Put(url string, handler ControllerHandler) {
-	upperUrl := strings.ToUpper(url)
-	c.router["PUT"][upperUrl] = handler
+	if err := c.router["PUT"].AddRouter(url, handler); err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 func (c *Core) Delete(url string, handler ControllerHandler) {
-	upperUrl := strings.ToUpper(url)
-	c.router["DELETE"][upperUrl] = handler
+	if err := c.router["DELETE"].AddRouter(url, handler); err != nil {
+		log.Fatal("add router error: ", err)
+	}
 }
 
 // === http method wrap end
@@ -58,12 +56,9 @@ func (c *Core) findRouteByRequest(request *http.Request) ControllerHandler {
 	uri := request.URL.Path
 	method := request.Method
 	upperMethod := strings.ToUpper(method)
-	upperUri := strings.ToUpper(uri)
 
 	if methodHandlers, ok := c.router[upperMethod]; ok {
-		if handler, ok := methodHandlers[upperUri]; ok {
-			return handler
-		}
+		return methodHandlers.FindHandler(uri)
 	}
 	return nil
 }

@@ -27,3 +27,42 @@ func NewGroup(core *Core, prefix string) *Group {
 		prefix: prefix,
 	}
 }
+
+// 实现Get方法
+func (g *Group) Get(url string, handler ControllerHandler) {
+	url = g.getAbsolutePrefix() + url
+	g.core.Get(url, handler)
+}
+
+// 实现Post方法
+func (g *Group) Post(url string, handler ControllerHandler) {
+	url = g.getAbsolutePrefix() + url
+	g.core.Post(url, handler)
+}
+
+// 实现Put方法
+func (g *Group) Put(uri string, handler ControllerHandler) {
+	uri = g.getAbsolutePrefix() + uri
+	g.core.Put(uri, handler)
+}
+
+// 实现Delete方法
+func (g *Group) Delete(uri string, handler ControllerHandler) {
+	uri = g.getAbsolutePrefix() + uri
+	g.core.Delete(uri, handler)
+}
+
+// 获取当前group的绝对路径
+func (g *Group) getAbsolutePrefix() string {
+	if g.parent == nil {
+		return g.prefix
+	}
+	return g.parent.getAbsolutePrefix() + g.prefix
+}
+
+// 实现Group方法
+func (g *Group) Group(url string) IGroup {
+	cgroup := NewGroup(g.core, url)
+	cgroup.parent = g
+	return cgroup
+}

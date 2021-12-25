@@ -1,23 +1,22 @@
 package kernel
 
 import (
-	"errors"
-	"encoding/json"
 	"bytes"
-	"io/ioutil"
-	"strconv"
-	"time"
-	"sync"
 	"context"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
+	"strconv"
+	"sync"
+	"time"
 )
 
-
 type Context struct {
-	request *http.Request
+	request        *http.Request
 	responseWriter http.ResponseWriter
-	ctx context.Context
-	hander ControllerHandler
+	ctx            context.Context
+	hander         ControllerHandler
 
 	// 是否超时的标志位
 	hasTimeout bool
@@ -27,13 +26,12 @@ type Context struct {
 
 func NewContext(req *http.Request, wr http.ResponseWriter) *Context {
 	return &Context{
-		request: req,
+		request:        req,
 		responseWriter: wr,
-		ctx: req.Context(),
-		writeMux: &sync.Mutex{},
+		ctx:            req.Context(),
+		writeMux:       &sync.Mutex{},
 	}
-} 
-
+}
 
 // #region base function
 func (ctx *Context) WriterMux() *sync.Mutex {
@@ -55,8 +53,8 @@ func (ctx *Context) SetHasTimeout() {
 func (ctx *Context) HasTimeout() bool {
 	return ctx.hasTimeout
 }
-// #endregion
 
+// #endregion
 
 func (ctx *Context) BaseContext() context.Context {
 	return ctx.request.Context()
@@ -78,7 +76,6 @@ func (ctx *Context) Err() error {
 func (ctx *Context) Value(key interface{}) interface{} {
 	return ctx.BaseContext().Value(key)
 }
-
 
 // #region query url
 func (ctx *Context) QueryInt(key string, def int) int {
@@ -121,8 +118,8 @@ func (ctx *Context) QueryAll() map[string][]string {
 	}
 	return map[string][]string{}
 }
-// #endregion
 
+// #endregion
 
 // #region form post
 func (ctx *Context) FormInt(key string, def int) int {
@@ -165,8 +162,8 @@ func (ctx *Context) FormAll() map[string][]string {
 	}
 	return map[string][]string{}
 }
-// #endregion
 
+// #endregion
 
 // #region application/json post
 func (ctx *Context) BindJson(obj interface{}) error {
@@ -186,8 +183,8 @@ func (ctx *Context) BindJson(obj interface{}) error {
 	}
 	return nil
 }
-// #endregion
 
+// #endregion
 
 // #region response
 func (ctx *Context) Json(status int, obj interface{}) error {
@@ -212,4 +209,5 @@ func (ctx *Context) HTML(status int, obj interface{}, template string) error {
 func (ctx *Context) Text(status int, obj string) error {
 	return nil
 }
+
 // #endregion

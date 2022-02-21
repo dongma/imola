@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// tree代表树结构，root表示树的根节点
+// Tree tree代表树结构，root表示树的根节点
 type Tree struct {
 	root *node
 }
@@ -96,7 +96,7 @@ func (n *node) matchNode(url string) *node {
 	return nil
 }
 
-// 增加路由节点, 路由节点有先后顺序，示例路由url如下:
+// AddRouter 增加路由节点, 路由节点有先后顺序，示例路由url如下:
 /*
 /book/list
 /book/:id (冲突)
@@ -146,7 +146,7 @@ func (tree *Tree) AddRouter(url string, handler ControllerHandler) error {
 	return nil
 }
 
-// 匹配url，直接复用matchNode()函数，url是不带通配符的地址
+// FindHandler 匹配url，直接复用matchNode()函数，url是不带通配符的地址
 func (tree *Tree) FindHandler(url string) ControllerHandler {
 	matchNode := tree.root.matchNode(url)
 	if matchNode == nil {

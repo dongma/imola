@@ -33,7 +33,7 @@ func NewContext(req *http.Request, wr http.ResponseWriter) *Context {
 	}
 }
 
-// #region base function
+// WriterMux #region base function
 func (ctx *Context) WriterMux() *sync.Mutex {
 	return ctx.writeMux
 }
@@ -60,7 +60,7 @@ func (ctx *Context) BaseContext() context.Context {
 	return ctx.request.Context()
 }
 
-// #region implement context.Context
+// Deadline #region implement context.Context
 func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
 	return ctx.BaseContext().Deadline()
 }
@@ -77,7 +77,7 @@ func (ctx *Context) Value(key interface{}) interface{} {
 	return ctx.BaseContext().Value(key)
 }
 
-// #region query url
+// QueryInt #region query url
 func (ctx *Context) QueryInt(key string, def int) int {
 	params := ctx.QueryAll()
 	if vals, ok := params[key]; ok {
@@ -121,7 +121,7 @@ func (ctx *Context) QueryAll() map[string][]string {
 
 // #endregion
 
-// #region form post
+// FormInt #region form post
 func (ctx *Context) FormInt(key string, def int) int {
 	params := ctx.FormAll()
 	if vals, ok := params[key]; ok {
@@ -165,7 +165,7 @@ func (ctx *Context) FormAll() map[string][]string {
 
 // #endregion
 
-// #region application/json post
+// BindJson #region application/json post
 func (ctx *Context) BindJson(obj interface{}) error {
 	if ctx.request != nil {
 		body, err := ioutil.ReadAll(ctx.request.Body)
@@ -186,7 +186,7 @@ func (ctx *Context) BindJson(obj interface{}) error {
 
 // #endregion
 
-// #region response
+// Json #region response
 func (ctx *Context) Json(status int, obj interface{}) error {
 	if ctx.HasTimeout() {
 		return nil

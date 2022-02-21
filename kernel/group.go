@@ -2,13 +2,13 @@ package kernel
 
 // IGroup 代表前缀分组
 type IGroup interface {
-	// 实现HttpMethod方法
+	// Get 实现HttpMethod方法
 	Get(string, ControllerHandler)
 	Post(string, ControllerHandler)
 	Put(string, ControllerHandler)
 	Delete(string, ControllerHandler)
 
-	// 实现嵌套group
+	// Group 实现嵌套group
 	Group(string) IGroup
 }
 
@@ -19,7 +19,7 @@ type Group struct {
 	prefix string // 这个group的通用前缀
 }
 
-// 初始化Group
+// NewGroup 初始化Group
 func NewGroup(core *Core, prefix string) *Group {
 	return &Group{
 		core:   core,
@@ -28,25 +28,25 @@ func NewGroup(core *Core, prefix string) *Group {
 	}
 }
 
-// 实现Get方法
+// Get 实现Get方法
 func (g *Group) Get(url string, handler ControllerHandler) {
 	url = g.getAbsolutePrefix() + url
 	g.core.Get(url, handler)
 }
 
-// 实现Post方法
+// Post 实现Post方法
 func (g *Group) Post(url string, handler ControllerHandler) {
 	url = g.getAbsolutePrefix() + url
 	g.core.Post(url, handler)
 }
 
-// 实现Put方法
+// Put 实现Put方法
 func (g *Group) Put(uri string, handler ControllerHandler) {
 	uri = g.getAbsolutePrefix() + uri
 	g.core.Put(uri, handler)
 }
 
-// 实现Delete方法
+// Delete 实现Delete方法
 func (g *Group) Delete(uri string, handler ControllerHandler) {
 	uri = g.getAbsolutePrefix() + uri
 	g.core.Delete(uri, handler)
@@ -60,7 +60,7 @@ func (g *Group) getAbsolutePrefix() string {
 	return g.parent.getAbsolutePrefix() + g.prefix
 }
 
-// 实现Group方法
+// Group 实现Group方法
 func (g *Group) Group(url string) IGroup {
 	cgroup := NewGroup(g.core, url)
 	cgroup.parent = g

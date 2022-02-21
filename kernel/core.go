@@ -20,7 +20,7 @@ func NewCore() *Core {
 	return &Core{router: router}
 }
 
-// http method wrap，匹配Http请求方法并添加路由规则
+// Get http method wrap，匹配Http请求方法并添加路由规则
 func (c *Core) Get(url string, handler ControllerHandler) {
 	if err := c.router["GET"].AddRouter(url, handler); err != nil {
 		log.Fatal("add router error: ", err)
@@ -45,7 +45,7 @@ func (c *Core) Delete(url string, handler ControllerHandler) {
 	}
 }
 
-// === http method wrap end
+// Group === http method wrap end
 func (c *Core) Group(prefix string) IGroup {
 	return NewGroup(c, prefix)
 }

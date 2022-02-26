@@ -12,10 +12,12 @@ type Tree struct {
 
 // 表示tree树中的node节点，包含子节点列表、segment、末尾节点信息
 type node struct {
-	isLast  bool              // 代表这个节点是否可以成为最终的路由规则，该节点是否能成为一个独立的url
-	segment string            // uri中额字符串，代表这个节点表示的路由中某个段的字符串
-	handler ControllerHandler // 此节点包含的控制器
-	childs  []*node           // 包含的叶子节点
+	isLast  bool   // 代表这个节点是否可以成为最终的路由规则，该节点是否能成为一个独立的url
+	segment string // uri中额字符串，代表这个节点表示的路由中某个段的字符串
+	//handler ControllerHandler // 此节点包含的控制器
+	childs []*node // 包含的叶子节点
+	// handler的升级策略，中间件+控制器
+	handlers []ControllerHandler
 }
 
 func newNode() *node {
@@ -105,7 +107,7 @@ func (n *node) matchNode(url string) *node {
 /:user/name
 /:user/name/:age (冲突)
 */
-func (tree *Tree) AddRouter(url string, handler ControllerHandler) error {
+func (tree *Tree) AddRouter(url string, handlers []ControllerHandler) error {
 	n := tree.root
 	if n.matchNode(url) != nil {
 		return errors.New("route exists: " + url)
@@ -136,7 +138,7 @@ func (tree *Tree) AddRouter(url string, handler ControllerHandler) error {
 			cnode.segment = segment
 			if isLast {
 				cnode.isLast = true
-				cnode.handler = handler
+				cnode.handlers = handlers
 			}
 			n.childs = append(n.childs, cnode)
 			objNode = cnode
@@ -147,10 +149,10 @@ func (tree *Tree) AddRouter(url string, handler ControllerHandler) error {
 }
 
 // FindHandler 匹配url，直接复用matchNode()函数，url是不带通配符的地址
-func (tree *Tree) FindHandler(url string) ControllerHandler {
+func (tree *Tree) FindHandler(url string) []ControllerHandler {
 	matchNode := tree.root.matchNode(url)
 	if matchNode == nil {
 		return nil
 	}
-	return matchNode.handler
+	return matchNode.handlers
 }

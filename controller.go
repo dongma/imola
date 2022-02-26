@@ -12,6 +12,7 @@ func FooControllerHandler(c *kernel.Context) error {
 	finish := make(chan struct{}, 1)
 	panicChan := make(chan interface{}, 1)
 
+	// 在业务处理前，创建具有定时功能的context
 	durationCtx, cancel := context.WithTimeout(c.BaseContext(), time.Duration(1*time.Second))
 	defer cancel()
 

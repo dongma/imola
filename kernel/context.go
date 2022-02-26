@@ -12,12 +12,15 @@ import (
 	"time"
 )
 
+// Context 代表当前请求的上下文
 type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
 	ctx            context.Context
-	hander         ControllerHandler
-
+	//handler        ControllerHandler
+	// 当前请求的handler链条，index为当前请求到的链条上第index个handler
+	handlers []ControllerHandler
+	index    int
 	// 是否超时的标志位
 	hasTimeout bool
 	// 写保护机制
@@ -30,7 +33,19 @@ func NewContext(req *http.Request, wr http.ResponseWriter) *Context {
 		responseWriter: wr,
 		ctx:            req.Context(),
 		writeMux:       &sync.Mutex{},
+		index:          -1,
 	}
+}
+
+// Next 核心函数，为了逐个调用context中#handlers列表中的每个处理逻辑
+func (ctx *Context) Next() error {
+	ctx.index++
+	if ctx.index < len(ctx.handlers) {
+		if err := ctx.handlers[ctx.index](ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // WriterMux #region base function
@@ -52,6 +67,10 @@ func (ctx *Context) SetHasTimeout() {
 
 func (ctx *Context) HasTimeout() bool {
 	return ctx.hasTimeout
+}
+
+func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
+	ctx.handlers = handlers
 }
 
 // #endregion

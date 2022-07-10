@@ -15,7 +15,7 @@ func registerRouter(core *kernel.Core) {
 		// 需求4: 动态路由
 		subjectApi.Delete("/:id", middleware.Test2(), api.SubjectDelController)
 		subjectApi.Put("/:id", api.SubjectUpdateController)
-		subjectApi.Get("/:id", api.SubjectAddController)
+		subjectApi.Get("/:id", api.SubjectGetController)
 		subjectApi.Get("/list/all", api.SubjectListController)
 
 		subjectInnerApi := subjectApi.Group("/info")

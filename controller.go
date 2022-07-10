@@ -23,12 +23,13 @@ func FooControllerHandler(c *kernel.Context) error {
 				panicChan <- p
 			}
 		}()
-		// Do real action
+		// Do real action，执行真正的业务操作
 		time.Sleep(10 * time.Second)
 		c.Json(200, "ok")
-
 		finish <- struct{}{}
 	}()
+
+	// 使用select关键字，监听3种事件：异常事件、结束事件和超时事件。
 	select {
 	case p := <-panicChan:
 		c.WriterMux().Lock()

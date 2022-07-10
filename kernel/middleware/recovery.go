@@ -11,6 +11,7 @@ func Recovery() kernel.ControllerHandler {
 				ctx.Json(500, err)
 			}
 		}()
+		// 使用next执行具体的业务逻辑，在main.go中触发Recovery函数
 		ctx.Next()
 		return nil
 	}

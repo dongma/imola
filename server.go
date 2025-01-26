@@ -12,7 +12,7 @@ type Server interface {
 	Start(add string) error
 
 	// AddRoute 路由注册, method是http方法、path是路由、handleFunc是业务逻辑
-	AddRoute(method string, path string, handleFunc HandleFunc)
+	addRoute(method string, path string, handleFunc HandleFunc)
 
 	// AddRouteVarFuncs 没有必要去提供，多个函数中断执行、方法优先级etc问题
 	// Deprecated
@@ -22,6 +22,13 @@ type Server interface {
 var _ Server = &HTTPServer{}
 
 type HTTPServer struct {
+	*router
+}
+
+func NewHTTPServer() *HTTPServer {
+	return &HTTPServer{
+		router: newRouter(),
+	}
 }
 
 // AddRouteVarFuncs Deprecated
@@ -29,22 +36,22 @@ func (h *HTTPServer) AddRouteVarFuncs(method string, path string, handleFunc ...
 	panic("implement me")
 }
 
-func (h *HTTPServer) AddRoute(method string, path string, handleFunc HandleFunc) {
+func (h *HTTPServer) addRoute(method string, path string, handleFunc HandleFunc) {
 	panic("implement me")
 }
 
 // GET 请求，在HTTPServer中实现
 func (h *HTTPServer) GET(path string, handleFunc HandleFunc) {
-	h.AddRoute(http.MethodGet, path, handleFunc)
+	h.addRoute(http.MethodGet, path, handleFunc)
 }
 
 // POST 请求，在HTTPServer中实现
 func (h *HTTPServer) POST(path string, handleFunc HandleFunc) {
-	h.AddRoute(http.MethodPost, path, handleFunc)
+	h.addRoute(http.MethodPost, path, handleFunc)
 }
 
 func (h *HTTPServer) OPTIONS(path string, handleFunc HandleFunc) {
-	h.AddRoute(http.MethodPost, path, handleFunc)
+	h.addRoute(http.MethodPost, path, handleFunc)
 }
 
 // ServeHTTP HTTPServer 处理请求入口

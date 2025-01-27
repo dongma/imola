@@ -65,14 +65,15 @@ func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 
 // serve 查找路由，执行实际的业务逻辑
 func (h *HTTPServer) serve(ctx *Context) {
-	n, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
-	if !ok || n.handler == nil {
+	info, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
+	if !ok || info.n.handler == nil {
 		// 路由没有命中，就是404
 		ctx.Resp.WriteHeader(404)
 		_, _ = ctx.Resp.Write([]byte("not found"))
 		return
 	}
-	n.handler(ctx)
+	ctx.PathParams = info.pathParams
+	info.n.handler(ctx)
 }
 
 func (h *HTTPServer) Start(addr string) error {

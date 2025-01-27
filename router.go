@@ -18,8 +18,15 @@ type node struct {
 	// 用户注册的业务逻辑
 	handler HandleFunc
 
+	// 路径参数匹配
+	paramChild *node
 	// 通配符*表达的节点，任意匹配
 	startChild *node
+}
+
+type matchInfo struct {
+	n          *node
+	pathParams map[string]string
 }
 
 func newRouter() router {
@@ -76,31 +83,57 @@ func (r *router) addRoute(method string, path string, handleFunc HandleFunc) {
 	root.handler = handleFunc
 }
 
-func (r *router) findRoute(method string, path string) (*node, bool) {
+func (r *router) findRoute(method string, path string) (*matchInfo, bool) {
 	root, ok := r.trees[method]
 	if !ok {
 		return nil, false
 	}
 	if path == "/" {
-		return root, true
+		return &matchInfo{
+			n: root,
+		}, true
 	}
 	// 把前置和后置的/都去掉
 	path = strings.Trim(path, "/")
 	// 按斜杠切割
 	segs := strings.Split(path, "/")
+	var pathParams map[string]string
 	for _, seg := range segs {
-		child, found := root.childOf(seg)
+		child, paramChild, found := root.childOf(seg)
+		// 命中了路径参数
+		if paramChild {
+			if pathParams == nil {
+				pathParams = make(map[string]string)
+			}
+			// path是:id这种格式
+			pathParams[child.path[:1]] = seg
+		}
 		if !found {
 			return nil, false
 		}
 		root = child
 	}
-	return root, true
+	return &matchInfo{
+		n:          root,
+		pathParams: pathParams,
+	}, true
 }
 
 // childOrCreate 根据seg找子节点，当子节点不存在时，进行创建
 func (n *node) childOrCreate(seg string) *node {
+	if seg[0] == ':' {
+		if n.startChild != nil {
+			panic("web: 不允许同时注册路径参数和通配符，已有通配符匹配")
+		}
+		n.paramChild = &node{
+			path: seg,
+		}
+		return n.paramChild
+	}
 	if seg == "*" {
+		if n.paramChild != nil {
+			panic("web: 不允许同时注册路径参数和通配符，已有路径参数")
+		}
 		n.startChild = &node{
 			path: seg,
 		}
@@ -121,13 +154,21 @@ func (n *node) childOrCreate(seg string) *node {
 	return res
 }
 
-func (n *node) childOf(path string) (*node, bool) {
+// childOf 优先考虑静态匹配，匹配不上考虑通配符匹配
+// 第一个返回参数为：是否子节点，第二个返回：是否路径参数、第三个返回：是否通配符节点
+func (n *node) childOf(path string) (*node, bool, bool) {
 	if n.children == nil {
-		return n.startChild, n.startChild != nil
+		if n.paramChild != nil {
+			return n.paramChild, true, true
+		}
+		return n.startChild, false, n.startChild != nil
 	}
 	res, ok := n.children[path]
 	if !ok {
-		return n.startChild, n.startChild != nil
+		if n.paramChild != nil {
+			return n.paramChild, true, true
+		}
+		return n.startChild, false, n.startChild != nil
 	}
-	return res, ok
+	return res, false, ok
 }

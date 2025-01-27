@@ -37,6 +37,10 @@ func TestRouter_addRouter(t *testing.T) {
 			path:   "/order/detail",
 		},
 		{
+			method: http.MethodGet,
+			path:   "/order/detail/:id",
+		},
+		{
 			method: http.MethodPost,
 			path:   "/order/create",
 		},
@@ -84,6 +88,10 @@ func TestRouter_addRouter(t *testing.T) {
 							"detail": &node{
 								path:    "detail",
 								handler: mockHandler,
+								paramChild: &node{
+									path:    ":id",
+									handler: mockHandler,
+								},
 							},
 						},
 					},
@@ -153,6 +161,13 @@ func (n *node) equal(y *node) (string, bool) {
 		}
 	}
 
+	if n.paramChild != nil {
+		msg, ok := n.paramChild.equal(y.paramChild)
+		if !ok {
+			return msg, ok
+		}
+	}
+
 	// 比较handler
 	nhandler := reflect.ValueOf(n.handler)
 	yhandler := reflect.ValueOf(y.handler)
@@ -203,7 +218,7 @@ func TestRouter_findRoute(t *testing.T) {
 		path      string
 		name      string
 		wantFound bool
-		wantNode  *node
+		info      *matchInfo
 	}{
 		{
 			// 方法不存在
@@ -217,25 +232,28 @@ func TestRouter_findRoute(t *testing.T) {
 			method:    http.MethodPost,
 			path:      "/order/create",
 			wantFound: true,
-			wantNode: &node{
-				handler: mockHandler,
-				path:    "create",
+			info: &matchInfo{
+				n: &node{
+					handler: mockHandler,
+					path:    "create",
+				},
 			},
 		},
 	}
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
-			n, found := r.findRoute(tc.method, tc.path)
+			info, found := r.findRoute(tc.method, tc.path)
 			assert.Equal(t, tc.wantFound, found)
 			if !found {
 				return
 			}
-			assert.Equal(t, tc.wantNode.path, n.path)
-			assert.Equal(t, tc.wantNode.children, n.children)
+			assert.Equal(t, tc.info.n.path, info.n.path)
+			assert.Equal(t, tc.info.n.children, info.n.children)
+			assert.Equal(t, tc.info.pathParams, info.pathParams)
 			// 比较handler
-			nhandler := reflect.ValueOf(n.handler)
-			yhandler := reflect.ValueOf(tc.wantNode.handler)
+			nhandler := reflect.ValueOf(info.n.handler)
+			yhandler := reflect.ValueOf(tc.info.n.handler)
 			assert.True(t, nhandler == yhandler)
 		})
 	}

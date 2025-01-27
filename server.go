@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type HandleFunc func(ctx Context)
+type HandleFunc func(ctx *Context)
 
 type Server interface {
 	http.Handler
@@ -22,7 +22,7 @@ type Server interface {
 var _ Server = &HTTPServer{}
 
 type HTTPServer struct {
-	*router
+	router
 }
 
 func NewHTTPServer() *HTTPServer {
@@ -37,7 +37,7 @@ func (h *HTTPServer) AddRouteVarFuncs(method string, path string, handleFunc ...
 }
 
 func (h *HTTPServer) addRoute(method string, path string, handleFunc HandleFunc) {
-	panic("implement me")
+	h.router.addRoute(method, path, handleFunc)
 }
 
 // GET 请求，在HTTPServer中实现
@@ -65,7 +65,14 @@ func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 
 // serve 查找路由，执行实际的业务逻辑
 func (h *HTTPServer) serve(ctx *Context) {
-	// TODO
+	n, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
+	if !ok || n.handler == nil {
+		// 路由没有命中，就是404
+		ctx.Resp.WriteHeader(404)
+		_, _ = ctx.Resp.Write([]byte("not found"))
+		return
+	}
+	n.handler(ctx)
 }
 
 func (h *HTTPServer) Start(addr string) error {

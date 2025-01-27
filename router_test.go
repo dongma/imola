@@ -44,13 +44,18 @@ func TestRouter_addRouter(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/login",
 		},
-		{
+		// 注册路由不能为空
+		/*{
 			method: http.MethodPost,
 			path:   "",
+		},*/
+		{
+			method: http.MethodPost,
+			path:   "/order/*",
 		},
 	}
 
-	var mockHandler HandleFunc = func(ctx Context) {}
+	var mockHandler HandleFunc = func(ctx *Context) {}
 	r := newRouter()
 	for _, route := range testRoutes {
 		r.addRoute(route.method, route.path, mockHandler)
@@ -95,6 +100,10 @@ func TestRouter_addRouter(t *testing.T) {
 								handler: mockHandler,
 							},
 						},
+						startChild: &node{
+							path:    "*",
+							handler: mockHandler,
+						},
 					},
 					"login": &node{
 						path:    "login",
@@ -105,7 +114,7 @@ func TestRouter_addRouter(t *testing.T) {
 		},
 	}
 
-	msg, ok := wantRouter.equal(r)
+	msg, ok := wantRouter.equal(&r)
 	assert.True(t, ok, msg)
 
 	r = newRouter()
@@ -137,6 +146,13 @@ func (n *node) equal(y *node) (string, bool) {
 	if len(n.children) != len(y.children) {
 		return fmt.Sprintf("子节点数量不相等"), false
 	}
+	if n.startChild != nil {
+		msg, ok := n.startChild.equal(y.startChild)
+		if !ok {
+			return msg, ok
+		}
+	}
+
 	// 比较handler
 	nhandler := reflect.ValueOf(n.handler)
 	yhandler := reflect.ValueOf(y.handler)
@@ -177,7 +193,7 @@ func TestRouter_findRoute(t *testing.T) {
 	}
 
 	r := newRouter()
-	var mockHandler HandleFunc = func(ctx Context) {}
+	var mockHandler HandleFunc = func(ctx *Context) {}
 	for _, route := range testRoute {
 		r.addRoute(route.method, route.path, mockHandler)
 	}

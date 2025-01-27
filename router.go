@@ -17,10 +17,13 @@ type node struct {
 	children map[string]*node
 	// 用户注册的业务逻辑
 	handler HandleFunc
+
+	// 通配符*表达的节点，任意匹配
+	startChild *node
 }
 
-func newRouter() *router {
-	return &router{
+func newRouter() router {
+	return router{
 		trees: map[string]*node{},
 	}
 }
@@ -97,6 +100,12 @@ func (r *router) findRoute(method string, path string) (*node, bool) {
 
 // childOrCreate 根据seg找子节点，当子节点不存在时，进行创建
 func (n *node) childOrCreate(seg string) *node {
+	if seg == "*" {
+		n.startChild = &node{
+			path: seg,
+		}
+		return n.startChild
+	}
 	// 1、children为nil，创建子节点
 	if n.children == nil {
 		n.children = map[string]*node{}
@@ -114,8 +123,11 @@ func (n *node) childOrCreate(seg string) *node {
 
 func (n *node) childOf(path string) (*node, bool) {
 	if n.children == nil {
-		return nil, false
+		return n.startChild, n.startChild != nil
 	}
-	child, ok := n.children[path]
-	return child, ok
+	res, ok := n.children[path]
+	if !ok {
+		return n.startChild, n.startChild != nil
+	}
+	return res, ok
 }

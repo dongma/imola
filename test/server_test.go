@@ -15,6 +15,16 @@ func TestServer(t *testing.T) {
 		fmt.Println("do first thing")
 	})
 
+	server.GET("/values/:id", func(ctx *imola.Context) {
+		id, err := ctx.PathValue("id").AsInt64()
+		if err != nil {
+			ctx.Resp.WriteHeader(400)
+			ctx.Resp.Write([]byte("id输入不对"))
+			return
+		}
+		ctx.Resp.Write([]byte(fmt.Sprintf("hello, %d", id)))
+	})
+
 	// 2、自己手动来处理，可以注册listener
 	server.Start(":8081")
 }

@@ -106,7 +106,7 @@ func (r *router) findRoute(method string, path string) (*matchInfo, bool) {
 				pathParams = make(map[string]string)
 			}
 			// path是:id这种格式
-			pathParams[child.path[:1]] = seg
+			pathParams[child.path[1:]] = seg
 		}
 		if !found {
 			return nil, false

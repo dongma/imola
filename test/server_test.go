@@ -25,6 +25,15 @@ func TestServer(t *testing.T) {
 		ctx.Resp.Write([]byte(fmt.Sprintf("hello, %d", id)))
 	})
 
+	type User struct {
+		Name string `json:"name"`
+	}
+
+	server.GET("/user/123", func(ctx *imola.Context) {
+		ctx.RespJSON(202, User{
+			Name: "Tom",
+		})
+	})
 	// 2、自己手动来处理，可以注册listener
 	server.Start(":8081")
 }

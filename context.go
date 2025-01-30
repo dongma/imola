@@ -92,3 +92,24 @@ func (s StringValue) AsInt64() (int64, error) {
 	}
 	return strconv.ParseInt(s.val, 10, 64)
 }
+
+func (c *Context) RespJSON(status int, val any) error {
+	data, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+	c.Resp.WriteHeader(status)
+	n, err := c.Resp.Write(data)
+	if n != len(data) {
+		return errors.New("web: 未写入全部数据")
+	}
+	return err
+}
+
+func (c *Context) RespJSONOK(val any) error {
+	return c.RespJSON(http.StatusOK, val)
+}
+
+func (c *Context) SetCookie(cookie *http.Cookie) {
+	http.SetCookie(c.Resp, cookie)
+}

@@ -12,6 +12,8 @@ type router struct {
 }
 
 type node struct {
+	route string
+
 	path string
 	// 子path到子节点的映射
 	children map[string]*node
@@ -63,6 +65,7 @@ func (r *router) addRoute(method string, path string, handleFunc HandleFunc) {
 			panic("web: 路由冲突，重复注册[/]")
 		}
 		root.handler = handleFunc
+		root.route = "/"
 		return
 	}
 
@@ -81,6 +84,7 @@ func (r *router) addRoute(method string, path string, handleFunc HandleFunc) {
 		panic(fmt.Sprintf("web: 路由冲突，重复注册 [%s]", path))
 	}
 	root.handler = handleFunc
+	root.route = path
 }
 
 func (r *router) findRoute(method string, path string) (*matchInfo, bool) {

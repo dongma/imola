@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"imola"
+	"net/http"
 	"testing"
 )
 
@@ -36,4 +37,36 @@ func TestServer(t *testing.T) {
 	})
 	// 2、自己手动来处理，可以注册listener
 	server.Start(":8081")
+}
+
+func TestHttpServer_serverHTTP(t *testing.T) {
+	server := imola.NewHTTPServer()
+	middles := []imola.Middleware{
+		func(next imola.HandleFunc) imola.HandleFunc {
+			return func(ctx *imola.Context) {
+				fmt.Println("第一个before...")
+				next(ctx)
+				fmt.Println("第一个after....")
+			}
+		},
+		func(next imola.HandleFunc) imola.HandleFunc {
+			return func(ctx *imola.Context) {
+				fmt.Println("第二个before...")
+				next(ctx)
+				fmt.Println("第二个after....")
+			}
+		},
+		func(next imola.HandleFunc) imola.HandleFunc {
+			return func(ctx *imola.Context) {
+				fmt.Println("第三个中断...")
+			}
+		},
+		func(next imola.HandleFunc) imola.HandleFunc {
+			return func(ctx *imola.Context) {
+				fmt.Println("第四个看不到...")
+			}
+		},
+	}
+	server.SetMiddlewares(middles)
+	server.ServeHTTP(nil, &http.Request{})
 }

@@ -13,7 +13,8 @@ type Context struct {
 	Resp       http.ResponseWriter
 	PathParams map[string]string
 
-	queryValues url.Values
+	queryValues  url.Values
+	MatchedRoute string
 }
 
 // BindJSON 解决大多数人的需求即可

@@ -21,14 +21,32 @@ type Server interface {
 
 var _ Server = &HTTPServer{}
 
+type HTTPServerOption func(server *HTTPServer)
+
 type HTTPServer struct {
 	router
+	mids []Middleware
 }
 
-func NewHTTPServer() *HTTPServer {
-	return &HTTPServer{
+func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
+	res := &HTTPServer{
 		router: newRouter(),
 	}
+	for _, opt := range opts {
+		opt(res)
+	}
+	return res
+}
+
+func ServerWithMiddleware(mdls ...Middleware) HTTPServerOption {
+	return func(server *HTTPServer) {
+		server.mids = mdls
+	}
+}
+
+// SetMiddlewares Deprecated，方法不优雅，代码太硬没有设计
+func (h *HTTPServer) SetMiddlewares(middlewares []Middleware) {
+	h.mids = middlewares
 }
 
 // AddRouteVarFuncs Deprecated
@@ -60,7 +78,12 @@ func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		Req:  request,
 		Resp: writer,
 	}
-	h.serve(ctx)
+	root := h.serve
+	// 然后这里就是调用最后一个不断向前回溯的组装链条，从后往前构造一个链条
+	for i := len(h.mids) - 1; i >= 0; i-- {
+		root = h.mids[i](root)
+	}
+	root(ctx)
 }
 
 // serve 查找路由，执行实际的业务逻辑
@@ -73,6 +96,7 @@ func (h *HTTPServer) serve(ctx *Context) {
 		return
 	}
 	ctx.PathParams = info.pathParams
+	ctx.MatchedRoute = info.n.route
 	info.n.handler(ctx)
 }
 

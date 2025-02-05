@@ -9,9 +9,13 @@ import (
 )
 
 type Context struct {
-	Req        *http.Request
-	Resp       http.ResponseWriter
-	PathParams map[string]string
+	Req *http.Request
+	// Resp 如果用户直接使用，那就绕开了RespData、RespStatusCode这两个，会导致部分middleware无法运作
+	Resp http.ResponseWriter
+	// RespData 主要是为了 middleware读写用的
+	RespData       []byte
+	RespStatusCode int
+	PathParams     map[string]string
 
 	queryValues  url.Values
 	MatchedRoute string
@@ -100,11 +104,15 @@ func (c *Context) RespJSON(status int, val any) error {
 		return err
 	}
 	c.Resp.WriteHeader(status)
-	n, err := c.Resp.Write(data)
+	/*n, err := c.Resp.Write(data)
 	if n != len(data) {
 		return errors.New("web: 未写入全部数据")
 	}
 	return err
+	*/
+	c.RespData = data
+	c.RespStatusCode = status
+	return nil
 }
 
 func (c *Context) RespJSONOK(val any) error {

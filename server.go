@@ -1,6 +1,7 @@
 package imola
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 )
@@ -26,11 +27,16 @@ type HTTPServerOption func(server *HTTPServer)
 type HTTPServer struct {
 	router
 	mids []Middleware
+
+	log func(msg string, args ...any)
 }
 
 func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
 	res := &HTTPServer{
 		router: newRouter(),
+		log: func(msg string, args ...any) {
+			fmt.Printf(msg, args...)
+		},
 	}
 	for _, opt := range opts {
 		opt(res)
@@ -83,7 +89,26 @@ func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request
 	for i := len(h.mids) - 1; i >= 0; i-- {
 		root = h.mids[i](root)
 	}
+
+	// 这里是最后一个步骤，就是把RespData和RespStatusCode 刷新到响应里面
+	var m Middleware = func(next HandleFunc) HandleFunc {
+		return func(ctx *Context) {
+			next(ctx)
+			h.flashResp(ctx)
+		}
+	}
+	root = m(root)
 	root(ctx)
+}
+
+func (h *HTTPServer) flashResp(ctx *Context) {
+	if ctx.RespStatusCode != 0 {
+		ctx.Resp.WriteHeader(ctx.RespStatusCode)
+	}
+	n, err := ctx.Resp.Write(ctx.RespData)
+	if err != nil || n != len(ctx.RespData) {
+		h.log("写入响应失败... %v", err)
+	}
 }
 
 // serve 查找路由，执行实际的业务逻辑
@@ -91,8 +116,10 @@ func (h *HTTPServer) serve(ctx *Context) {
 	info, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
 	if !ok || info.n.handler == nil {
 		// 路由没有命中，就是404
-		ctx.Resp.WriteHeader(404)
-		_, _ = ctx.Resp.Write([]byte("not found"))
+		/*ctx.Resp.WriteHeader(404)
+		_, _ = ctx.Resp.Write([]byte("not found"))*/
+		ctx.RespStatusCode = 404
+		ctx.RespData = []byte("not found")
 		return
 	}
 	ctx.PathParams = info.pathParams

@@ -19,6 +19,19 @@ type Context struct {
 
 	queryValues  url.Values
 	MatchedRoute string
+
+	tplEngine TemplateEngine
+}
+
+func (c *Context) Render(tplName string, data any) error {
+	var err error
+	c.RespData, err = c.tplEngine.Render(c.Req.Context(), tplName, data)
+	if err != nil {
+		c.RespStatusCode = http.StatusInternalServerError
+		return err
+	}
+	c.RespStatusCode = http.StatusOK
+	return nil
 }
 
 // BindJSON 解决大多数人的需求即可

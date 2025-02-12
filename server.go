@@ -29,6 +29,8 @@ type HTTPServer struct {
 	mids []Middleware
 
 	log func(msg string, args ...any)
+
+	tplEngine TemplateEngine
 }
 
 func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
@@ -47,6 +49,12 @@ func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
 func ServerWithMiddleware(mdls ...Middleware) HTTPServerOption {
 	return func(server *HTTPServer) {
 		server.mids = mdls
+	}
+}
+
+func ServerWithTemplateEngine(tplEngine TemplateEngine) HTTPServerOption {
+	return func(server *HTTPServer) {
+		server.tplEngine = tplEngine
 	}
 }
 
@@ -81,8 +89,9 @@ func (h *HTTPServer) OPTIONS(path string, handleFunc HandleFunc) {
 // ServeHTTP HTTPServer 处理请求入口
 func (h *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	ctx := &Context{
-		Req:  request,
-		Resp: writer,
+		Req:       request,
+		Resp:      writer,
+		tplEngine: h.tplEngine,
 	}
 	root := h.serve
 	// 然后这里就是调用最后一个不断向前回溯的组装链条，从后往前构造一个链条

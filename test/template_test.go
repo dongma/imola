@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"html/template"
+	"imola"
+	"log"
 	"testing"
 )
 
@@ -66,6 +68,23 @@ Hello, {{.Hello "Tom" "Jerry"}}`)
 	assert.Equal(t, `
 切片长度：2
 Hello, Tom-Jerry`, buffer.String())
+}
+
+func TestLoginPage(t *testing.T) {
+	tpl, err := template.ParseGlob("testdata/tpls/*.gohtml")
+	require.NoError(t, err)
+	engine := &imola.GoTemplateEngine{
+		T: tpl,
+	}
+
+	h := imola.NewHTTPServer(imola.ServerWithTemplateEngine(engine))
+	h.GET("/login", func(ctx *imola.Context) {
+		err := ctx.Render("login.gohtml", nil)
+		if err != nil {
+			log.Println(err)
+		}
+	})
+	h.Start(":8081")
 }
 
 type FuncCall struct {

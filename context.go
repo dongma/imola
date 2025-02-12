@@ -111,6 +111,24 @@ func (s StringValue) AsInt64() (int64, error) {
 	return strconv.ParseInt(s.val, 10, 64)
 }
 
+func (s StringValue) String() (string, error) {
+	return s.val, s.err
+}
+
+func (s StringValue) ToInt64() (int64, error) {
+	if s.err != nil {
+		return 0, s.err
+	}
+	return strconv.ParseInt(s.val, 10, 64)
+}
+
+func (s StringValue) ToUInt64() (uint64, error) {
+	if s.err != nil {
+		return 0, s.err
+	}
+	return strconv.ParseUint(s.val, 10, 64)
+}
+
 func (c *Context) RespJSON(status int, val any) error {
 	data, err := json.Marshal(val)
 	if err != nil {

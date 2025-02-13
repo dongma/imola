@@ -21,6 +21,8 @@ type Context struct {
 	MatchedRoute string
 
 	tplEngine TemplateEngine
+	// UserValues的初始化为nil，由用户手动初始化
+	UserValues map[string]any
 }
 
 func (c *Context) Render(tplName string, data any) error {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// Session 基本操作，获取、设置session信息
 type Session interface {
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key string, val string) error

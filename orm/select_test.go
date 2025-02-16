@@ -13,36 +13,44 @@ func TestSelector_Build(t *testing.T) {
 		wantQuery *Query
 		wantErr   error
 	}{
+		// where部分的测试，支持AND、NOT、OR类型
 		{
-			name:    "no from",
-			builder: &Selector[TestModel]{},
+			name:    "empty where",
+			builder: (&Selector[TestModel]{}).Where(),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
-				Args: nil,
+				SQL: "SELECT * FROM `TestModel`;",
 			},
 		},
 		{
-			name:    "from",
-			builder: (&Selector[TestModel]{}).From("test_model"),
+			name:    "where",
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18)),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `test_model`;",
-				Args: nil,
+				SQL:  "SELECT * FROM `TestModel` WHERE `Age` = ?;",
+				Args: []any{18},
 			},
 		},
 		{
-			name:    "empty from",
-			builder: (&Selector[TestModel]{}).From(""),
+			name:    "not",
+			builder: (&Selector[TestModel]{}).Where(Not(C("Age").Eq(18))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
-				Args: nil,
+				SQL:  "SELECT * FROM `TestModel` WHERE  NOT (`Age` = ?);",
+				Args: []any{18},
 			},
 		},
 		{
-			name:    "from db",
-			builder: (&Selector[TestModel]{}).From("test_db.testmodel"),
+			name:    "and",
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).And(C("FirstName").Eq("Tom"))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `test_db`.`testmodel`;",
-				Args: nil,
+				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) AND (`FirstName` = ?);",
+				Args: []any{18, "Tom"},
+			},
+		},
+		{
+			name:    "or",
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("FirstName").Eq("Tom"))),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) OR (`FirstName` = ?);",
+				Args: []any{18, "Tom"},
 			},
 		},
 	}

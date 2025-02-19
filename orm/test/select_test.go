@@ -1,54 +1,55 @@
-package orm
+package test
 
 import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
+	"imola/orm"
 	"testing"
 )
 
 func TestSelector_Build(t *testing.T) {
 	testCases := []struct {
 		name      string
-		builder   QueryBuilder
-		wantQuery *Query
+		builder   orm.QueryBuilder
+		wantQuery *orm.Query
 		wantErr   error
 	}{
 		// where部分的测试，支持AND、NOT、OR类型
 		{
 			name:    "empty where",
-			builder: (&Selector[TestModel]{}).Where(),
-			wantQuery: &Query{
+			builder: (&orm.Selector[TestModel]{}).Where(),
+			wantQuery: &orm.Query{
 				SQL: "SELECT * FROM `TestModel`;",
 			},
 		},
 		{
 			name:    "where",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18)),
-			wantQuery: &Query{
+			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18)),
+			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `TestModel` WHERE `Age` = ?;",
 				Args: []any{18},
 			},
 		},
 		{
 			name:    "not",
-			builder: (&Selector[TestModel]{}).Where(Not(C("Age").Eq(18))),
-			wantQuery: &Query{
+			builder: (&orm.Selector[TestModel]{}).Where(orm.Not(orm.C("Age").Eq(18))),
+			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `TestModel` WHERE  NOT (`Age` = ?);",
 				Args: []any{18},
 			},
 		},
 		{
 			name:    "and",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).And(C("FirstName").Eq("Tom"))),
-			wantQuery: &Query{
+			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).And(orm.C("FirstName").Eq("Tom"))),
+			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) AND (`FirstName` = ?);",
 				Args: []any{18, "Tom"},
 			},
 		},
 		{
 			name:    "or",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("FirstName").Eq("Tom"))),
-			wantQuery: &Query{
+			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).Or(orm.C("FirstName").Eq("Tom"))),
+			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) OR (`FirstName` = ?);",
 				Args: []any{18, "Tom"},
 			},

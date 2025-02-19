@@ -1,8 +1,10 @@
-package reflect
+package test
 
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
+	reflect2 "imola/orm/reflect"
+	"reflect"
 	"testing"
 )
 
@@ -42,7 +44,7 @@ func TestIterateFields(t *testing.T) {
 			},
 		},
 		{
-			name:    "basic type",
+			name:    "basic types",
 			entity:  18,
 			wantErr: errors.New("不支持类型"),
 		},
@@ -75,7 +77,7 @@ func TestIterateFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := IterateFields(tc.entity)
+			res, err := reflect2.IterateFields(tc.entity)
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
@@ -84,4 +86,67 @@ func TestIterateFields(t *testing.T) {
 		})
 	}
 
+}
+
+func TestSetField(t *testing.T) {
+	type User struct {
+		Name string
+		age  int
+	}
+
+	testCases := []struct {
+		name    string
+		entity  any
+		field   string
+		newVal  any
+		wantErr error
+		// 修改后的entity
+		wantEntity any
+	}{
+		{
+			name: "struct",
+			entity: User{
+				Name: "Tom",
+			},
+			field:   "Name",
+			newVal:  "Jerry",
+			wantErr: errors.New("不可修改字段"),
+		},
+		{
+			name: "pointer",
+			entity: &User{
+				Name: "Tom",
+			},
+			field:  "Name",
+			newVal: "Jerry",
+			wantEntity: &User{
+				Name: "Jerry",
+			},
+		},
+		{
+			name: "pointer exported",
+			entity: &User{
+				age: 18,
+			},
+			field:   "age",
+			newVal:  19,
+			wantErr: errors.New("不可修改字段"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := reflect2.SetField(tc.entity, tc.field, tc.newVal)
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantEntity, tc.entity)
+		})
+	}
+
+	var i = 0
+	ptr := &i
+	reflect.ValueOf(ptr).Elem().Set(reflect.ValueOf(12))
+	assert.Equal(t, 12, i)
 }

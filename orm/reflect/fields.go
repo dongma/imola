@@ -40,3 +40,17 @@ func IterateFields(entity any) (map[string]any, error) {
 	}
 	return res, nil
 }
+
+// SetField 用反射设置字段的值
+func SetField(entity any, field string, newValue any) error {
+	val := reflect.ValueOf(entity)
+	for val.Type().Kind() == reflect.Pointer {
+		val = val.Elem()
+	}
+	fieldVal := val.FieldByName(field)
+	if !fieldVal.CanSet() {
+		return errors.New("不可修改字段")
+	}
+	fieldVal.Set(reflect.ValueOf(newValue))
+	return nil
+}

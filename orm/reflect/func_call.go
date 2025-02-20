@@ -14,7 +14,10 @@ func IterateFunc(entity any) (map[string]FuncInfo, error) {
 		numIn := fn.Type().NumIn()
 		input := make([]reflect.Type, 0, numIn)
 		inputValues := make([]reflect.Value, 0, numIn)
-		for j := 0; j < numIn; j++ {
+
+		inputValues = append(inputValues, reflect.ValueOf(entity))
+		input = append(input, reflect.TypeOf(entity))
+		for j := 1; j < numIn; j++ {
 			fnInType := fn.Type().In(j)
 			input = append(input, fnInType)
 			inputValues = append(inputValues, reflect.Zero(fnInType))

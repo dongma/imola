@@ -21,15 +21,31 @@ func TestIterateFunc(t *testing.T) {
 			wantRes: map[string]reflect2.FuncInfo{
 				"GetAge": {
 					Name: "GetAge",
-					//InputTypes: nil,
+					// 下标为0的指向接收器
+					InputTypes: []reflect.Type{reflect.TypeOf(types.User{})},
+					//
+					OutputTypes: []reflect.Type{reflect.TypeOf(0)},
+					Result:      []any{18},
+				},
+			},
+		},
+		{
+			name:   "pointer",
+			entity: types.NewUserPtr("Tom", 18),
+			wantRes: map[string]reflect2.FuncInfo{
+				"GetAge": {
+					Name: "GetAge",
+					// 下标为0的指向接收器
+					InputTypes: []reflect.Type{reflect.TypeOf(&types.User{})},
+					//
 					OutputTypes: []reflect.Type{reflect.TypeOf(0)},
 					Result:      []any{18},
 				},
 				"ChangeName": {
-					Name:       "ChangeName",
-					InputTypes: []reflect.Type{reflect.TypeOf("")},
-					//OutputTypes: []reflect.Type{reflect.TypeOf(0)},
-					//Result:      []any{18},
+					Name:        "ChangeName",
+					InputTypes:  []reflect.Type{reflect.TypeOf(&types.User{}), reflect.TypeOf("")},
+					OutputTypes: []reflect.Type{},
+					Result:      []any{},
 				},
 			},
 		},

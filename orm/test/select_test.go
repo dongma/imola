@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
 	"imola/orm"
+	"imola/orm/internal/errs"
 	"testing"
 )
 
@@ -19,14 +20,14 @@ func TestSelector_Build(t *testing.T) {
 			name:    "empty where",
 			builder: (&orm.Selector[TestModel]{}).Where(),
 			wantQuery: &orm.Query{
-				SQL: "SELECT * FROM `TestModel`;",
+				SQL: "SELECT * FROM `test_model`;",
 			},
 		},
 		{
 			name:    "where",
 			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18)),
 			wantQuery: &orm.Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE `Age` = ?;",
+				SQL:  "SELECT * FROM `test_model` WHERE `age` = ?;",
 				Args: []any{18},
 			},
 		},
@@ -34,7 +35,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "not",
 			builder: (&orm.Selector[TestModel]{}).Where(orm.Not(orm.C("Age").Eq(18))),
 			wantQuery: &orm.Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE  NOT (`Age` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE  NOT (`age` = ?);",
 				Args: []any{18},
 			},
 		},
@@ -42,7 +43,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "and",
 			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).And(orm.C("FirstName").Eq("Tom"))),
 			wantQuery: &orm.Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) AND (`FirstName` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "Tom"},
 			},
 		},
@@ -50,9 +51,14 @@ func TestSelector_Build(t *testing.T) {
 			name:    "or",
 			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).Or(orm.C("FirstName").Eq("Tom"))),
 			wantQuery: &orm.Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`Age` = ?) OR (`FirstName` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?);",
 				Args: []any{18, "Tom"},
 			},
+		},
+		{
+			name:    "invalid column",
+			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).Or(orm.C("xxxx").Eq("Tom"))),
+			wantErr: errs.NewErrUnknownField("xxxx"),
 		},
 	}
 

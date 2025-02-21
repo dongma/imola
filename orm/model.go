@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"imola/orm/internal/errs"
 	"reflect"
 	"unicode"
 )
@@ -15,8 +16,13 @@ type Field struct {
 	Column string
 }
 
+// ParseModel 限制只能使用一级指针
 func ParseModel(entity any) (*Model, error) {
 	typ := reflect.TypeOf(entity)
+	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Struct {
+		return nil, errs.ErrPointerOnly
+	}
+	typ = typ.Elem()
 	numField := typ.NumField()
 	fieldMap := make(map[string]*Field, numField)
 	for i := 0; i < numField; i++ {

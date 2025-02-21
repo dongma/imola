@@ -2,12 +2,13 @@ package orm
 
 import (
 	"context"
-	"reflect"
+	"imola/orm/internal/errs"
 	"strings"
 )
 
 type Selector[T any] struct {
 	table    string
+	model    *Model
 	where    []Predicate
 	sBuilder *strings.Builder
 	args     []any
@@ -15,13 +16,17 @@ type Selector[T any] struct {
 
 func (s Selector[T]) Build() (*Query, error) {
 	s.sBuilder = &strings.Builder{}
+	var err error
+	s.model, err = ParseModel(new(T))
+	if err != nil {
+		return nil, err
+	}
+
 	sBuilder := s.sBuilder
 	sBuilder.WriteString("SELECT * FROM ")
 	if s.table == "" {
-		var t T
-		typ := reflect.TypeOf(t)
 		sBuilder.WriteByte('`')
-		sBuilder.WriteString(typ.Name())
+		sBuilder.WriteString(s.model.TableName)
 		sBuilder.WriteByte('`')
 	} else {
 		//segs := strings.Split(s.table, ".")
@@ -85,12 +90,19 @@ func (s *Selector[T]) BuildExpression(expr Expression) error {
 			s.sBuilder.WriteByte(')')
 		}
 	case Column:
+		fd, ok := s.model.Fields[exp.name]
+		// 字段不对，或者说列不对
+		if !ok {
+			return errs.NewErrUnknownField(exp.name)
+		}
 		s.sBuilder.WriteByte('`')
-		s.sBuilder.WriteString(exp.name)
+		s.sBuilder.WriteString(fd.Column)
 		s.sBuilder.WriteByte('`')
 	case value:
 		s.sBuilder.WriteByte('?')
 		s.AddArg(exp.val)
+	default:
+		return errs.NewErrUnsupportedExpression(expr)
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package test
 import (
 	"github.com/stretchr/testify/assert"
 	"imola/orm"
+	"imola/orm/internal/errs"
 	"testing"
 )
 
@@ -14,8 +15,23 @@ func TestParseModel(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name:   "test model",
-			entity: TestModel{},
+			name:    "struct",
+			entity:  TestModel{},
+			wantErr: errs.ErrPointerOnly,
+		},
+		{
+			name:    "map",
+			entity:  map[string]string{},
+			wantErr: errs.ErrPointerOnly,
+		},
+		{
+			name:    "slice",
+			entity:  []int{},
+			wantErr: errs.ErrPointerOnly,
+		},
+		{
+			name:   "pointer",
+			entity: &TestModel{},
 			wantModel: &orm.Model{
 				TableName: "test_model",
 				Fields: map[string]*orm.Field{

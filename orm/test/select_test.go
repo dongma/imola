@@ -3,12 +3,15 @@ package test
 import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"imola/orm"
 	"imola/orm/internal/errs"
 	"testing"
 )
 
 func TestSelector_Build(t *testing.T) {
+	db, err := orm.NewDB()
+	require.NoError(t, err)
 	testCases := []struct {
 		name      string
 		builder   orm.QueryBuilder
@@ -18,14 +21,14 @@ func TestSelector_Build(t *testing.T) {
 		// where部分的测试，支持AND、NOT、OR类型
 		{
 			name:    "empty where",
-			builder: (&orm.Selector[TestModel]{}).Where(),
+			builder: orm.NewSelector[TestModel](db).Where(),
 			wantQuery: &orm.Query{
 				SQL: "SELECT * FROM `test_model`;",
 			},
 		},
 		{
 			name:    "where",
-			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18)),
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Age").Eq(18)),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE `age` = ?;",
 				Args: []any{18},
@@ -33,7 +36,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "not",
-			builder: (&orm.Selector[TestModel]{}).Where(orm.Not(orm.C("Age").Eq(18))),
+			builder: orm.NewSelector[TestModel](db).Where(orm.Not(orm.C("Age").Eq(18))),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE  NOT (`age` = ?);",
 				Args: []any{18},
@@ -41,7 +44,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "and",
-			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).And(orm.C("FirstName").Eq("Tom"))),
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Age").Eq(18).And(orm.C("FirstName").Eq("Tom"))),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "Tom"},
@@ -49,7 +52,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "or",
-			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).Or(orm.C("FirstName").Eq("Tom"))),
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Age").Eq(18).Or(orm.C("FirstName").Eq("Tom"))),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?);",
 				Args: []any{18, "Tom"},
@@ -57,7 +60,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "invalid column",
-			builder: (&orm.Selector[TestModel]{}).Where(orm.C("Age").Eq(18).Or(orm.C("xxxx").Eq("Tom"))),
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Age").Eq(18).Or(orm.C("xxxx").Eq("Tom"))),
 			wantErr: errs.NewErrUnknownField("xxxx"),
 		},
 	}

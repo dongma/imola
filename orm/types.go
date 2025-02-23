@@ -24,3 +24,8 @@ type Query struct {
 	SQL  string
 	Args []any
 }
+
+// TableName 用户实现这个接口来返回自定义的表名
+type TableName interface {
+	TableName() string
+}

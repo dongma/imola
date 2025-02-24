@@ -5,6 +5,7 @@ go 1.22.0
 //toolchain go1.22.11
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/mattn/go-sqlite3 v1.14.24

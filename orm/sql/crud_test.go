@@ -54,6 +54,27 @@ func TestDB(t *testing.T) {
 	cancel()
 }
 
+func TestPreparedStatement(t *testing.T) {
+	db, err := sql.Open("sqlite3", "file:test.db?cache=shared&mode=memory")
+	require.NoError(t, err)
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	stmt, err := db.PrepareContext(ctx, "select * from `test_model` where id = ?")
+	require.NoError(t, err)
+	// id=1
+	rows, err := stmt.QueryContext(ctx, 1)
+	for rows.Next() {
+		tm := &TestModel{}
+		err = rows.Scan(&tm.Id, &tm.FirstName, &tm.Age, &tm.LastName)
+		require.NoError(t, err)
+		log.Println(tm)
+	}
+	cancel()
+	// 整个应用关闭时调用
+	db.Close()
+}
+
 type TestModel struct {
 	Id        int64
 	FirstName string

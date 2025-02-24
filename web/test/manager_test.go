@@ -2,17 +2,17 @@ package test
 
 import (
 	"github.com/google/uuid"
-	"imola"
-	"imola/session"
-	"imola/session/cookie"
-	"imola/session/memory"
+	"imola/web"
+	"imola/web/session"
+	"imola/web/session/cookie"
+	"imola/web/session/memory"
 	"net/http"
 	"testing"
 	"time"
 )
 
 func TestManager(t *testing.T) {
-	server := imola.NewHTTPServer()
+	server := web.NewHTTPServer()
 	manager := session.Manager{
 		SessionCtxKey: "_sess",
 		Store:         memory.NewStore(30 * time.Minute),
@@ -22,7 +22,7 @@ func TestManager(t *testing.T) {
 			})),
 	}
 
-	server.GET("/login", func(ctx *imola.Context) {
+	server.GET("/login", func(ctx *web.Context) {
 		// 登录时的一大堆校验
 		id := uuid.New()
 		session, err := manager.InitSession(ctx, id.String())
@@ -40,7 +40,7 @@ func TestManager(t *testing.T) {
 		ctx.RespData = []byte(val)
 	})
 
-	server.GET("/resource", func(ctx *imola.Context) {
+	server.GET("/resource", func(ctx *web.Context) {
 		session, err := manager.GetSession(ctx)
 		if err != nil {
 			ctx.RespStatusCode = http.StatusInternalServerError
@@ -50,7 +50,7 @@ func TestManager(t *testing.T) {
 		ctx.RespData = []byte(val)
 	})
 
-	server.GET("/logout", func(ctx *imola.Context) {
+	server.GET("/logout", func(ctx *web.Context) {
 		_ = manager.RemoveSession(ctx)
 	})
 	server.Start(":8081")

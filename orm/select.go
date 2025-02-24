@@ -133,8 +133,28 @@ func (s *Selector[T]) From(tbl string) *Selector[T] {
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*interface{}, error) {
-	//TODO implement me
-	panic("implement me")
+	query, err := s.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	db := s.db.db
+	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	// 数据库执行错误，返回err
+	if err != nil {
+		return nil, err
+	}
+	// 确认rows中是否有查询结果，若无，则跑出异常
+	if !rows.Next() {
+		return nil, ErrorNoRows
+	}
+	// 拿到select出来的列
+	_, err = rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*interface{}, error) {

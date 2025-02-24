@@ -1,7 +1,11 @@
 package test
 
 import (
+	"context"
 	"database/sql"
+	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"imola/orm"
@@ -10,8 +14,7 @@ import (
 )
 
 func TestSelector_Build(t *testing.T) {
-	db, err := orm.NewDB()
-	require.NoError(t, err)
+	db := memoryDB(t)
 	testCases := []struct {
 		name      string
 		builder   orm.QueryBuilder
@@ -75,6 +78,58 @@ func TestSelector_Build(t *testing.T) {
 			assert.Equal(t, tc.wantQuery, q)
 		})
 	}
+}
+
+func TestSelector_Get(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	db, err := orm.OpenDB(mockDB)
+	require.NoError(t, err)
+	// 对应于query error
+	mock.ExpectQuery("select .*").WillReturnError(errors.New("query error"))
+	// 对应于no rows
+	rows := sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
+	mock.ExpectQuery("SELECT .* WHERE ID <.").WillReturnRows(rows)
+
+	testCases := []struct {
+		name    string
+		s       *orm.Selector[TestModel]
+		wantErr error
+		wantRes *TestModel
+	}{
+		{
+			name:    "invalid query",
+			s:       orm.NewSelector[TestModel](db).Where(orm.C("xxx").Eq(18)),
+			wantErr: errs.NewErrUnknownField("xxx"),
+		},
+		{
+			name:    "query error",
+			s:       orm.NewSelector[TestModel](db).Where(orm.C("Id").Eq(1)),
+			wantErr: errors.New("query error"),
+		},
+		{
+			name:    "no rows",
+			s:       orm.NewSelector[TestModel](db).Where(orm.C("Id").Lt(1)),
+			wantErr: orm.ErrorNoRows,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := tc.s.Get(context.Background())
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantRes, res)
+		})
+	}
+}
+
+func memoryDB(t *testing.T) *orm.DB {
+	db, err := orm.Open("sqlite3", "file:test.db?cache=shared&mode=memory")
+	require.NoError(t, err)
+	return db
 }
 
 type TestModel struct {

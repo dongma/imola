@@ -12,6 +12,7 @@ const (
 	opNot op = "NOT"
 	opAnd op = "AND"
 	opOr  op = "OR"
+	opLt  op = "<"
 )
 
 type Predicate struct {
@@ -35,6 +36,16 @@ func (c Column) Eq(arg any) Predicate {
 	return Predicate{
 		left: c,
 		op:   opEq,
+		right: value{
+			val: arg,
+		},
+	}
+}
+
+func (c Column) Lt(arg any) Predicate {
+	return Predicate{
+		left: c,
+		op:   opLt,
 		right: value{
 			val: arg,
 		},

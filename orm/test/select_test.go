@@ -90,6 +90,10 @@ func TestSelector_Get(t *testing.T) {
 	// 对应于no rows
 	rows := sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
 	mock.ExpectQuery("SELECT .* WHERE ID <.").WillReturnRows(rows)
+	// 对应于data
+	rows = sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
+	rows.AddRow("1", "Tom", "18", "Jerry")
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
 
 	testCases := []struct {
 		name    string
@@ -111,6 +115,16 @@ func TestSelector_Get(t *testing.T) {
 			name:    "no rows",
 			s:       orm.NewSelector[TestModel](db).Where(orm.C("Id").Lt(1)),
 			wantErr: orm.ErrorNoRows,
+		},
+		{
+			name: "data",
+			s:    orm.NewSelector[TestModel](db).Where(orm.C("Id").Eq(1)),
+			wantRes: &TestModel{
+				Id:        1,
+				FirstName: "Tom",
+				Age:       18,
+				LastName:  &sql.NullString{Valid: true, String: "Jerry"},
+			},
 		},
 	}
 

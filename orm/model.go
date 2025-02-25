@@ -25,7 +25,7 @@ func ModelWithTableName(tableName string) ModelOpt {
 // ModelWithColumnName 自定义列名
 func ModelWithColumnName(field string, columnName string) ModelOpt {
 	return func(model *Model) error {
-		fd, ok := model.Fields[field]
+		fd, ok := model.FieldMap[field]
 		if !ok {
 			return errs.NewErrUnknownField(field)
 		}
@@ -45,12 +45,18 @@ type IRegistry interface {
 
 type Model struct {
 	TableName string
-	Fields    map[string]*Field
+	// 字段名到字段定义的映射，Id->id, FirstName->first_name
+	FieldMap map[string]*Field
+	// 列名到字段定义的映射, id->Id, first_name->FirstName
+	ColumnMap map[string]*Field
 }
 
 type Field struct {
+	GoName string
 	// 列名
 	Column string
+	// 字段的类型
+	Typ reflect.Type
 }
 
 // Registry 代表元数据的注册中心
@@ -106,6 +112,8 @@ func (r *Registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 	elemTyp := typ.Elem()
 	numField := elemTyp.NumField()
 	fieldMap := make(map[string]*Field, numField)
+	columnMap := make(map[string]*Field, numField)
+
 	for i := 0; i < numField; i++ {
 		fdType := elemTyp.Field(i)
 		pair, err := r.ParseTag(fdType.Tag)
@@ -117,9 +125,14 @@ func (r *Registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 			// 用户没有设置tag别名
 			colName = underscoreName(fdType.Name)
 		}
-		fieldMap[fdType.Name] = &Field{
+		fdMeta := &Field{
 			Column: colName,
+			// 获取字段类型
+			Typ:    fdType.Type,
+			GoName: fdType.Name,
 		}
+		fieldMap[fdType.Name] = fdMeta
+		columnMap[colName] = fdMeta
 	}
 
 	var tableName string
@@ -131,7 +144,8 @@ func (r *Registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 	}
 	res := &Model{
 		TableName: tableName,
-		Fields:    fieldMap,
+		FieldMap:  fieldMap,
+		ColumnMap: columnMap,
 	}
 	for _, opt := range opts {
 		err := opt(res)

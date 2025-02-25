@@ -3,6 +3,7 @@ package orm
 import (
 	"context"
 	"imola/orm/internal/errs"
+	"reflect"
 	"strings"
 )
 
@@ -98,7 +99,7 @@ func (s *Selector[T]) BuildExpression(expr Expression) error {
 			s.sBuilder.WriteByte(')')
 		}
 	case Column:
-		fd, ok := s.model.Fields[exp.name]
+		fd, ok := s.model.FieldMap[exp.name]
 		// 字段不对，或者说列不对
 		if !ok {
 			return errs.NewErrUnknownField(exp.name)
@@ -132,7 +133,7 @@ func (s *Selector[T]) From(tbl string) *Selector[T] {
 	return s
 }
 
-func (s *Selector[T]) Get(ctx context.Context) (*interface{}, error) {
+func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	query, err := s.Build()
 	if err != nil {
 		return nil, err
@@ -149,15 +150,45 @@ func (s *Selector[T]) Get(ctx context.Context) (*interface{}, error) {
 		return nil, ErrorNoRows
 	}
 	// 拿到select出来的列
-	_, err = rows.Columns()
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	// 如何利用cols来解决顺序和类型问题
+	tp := new(T)
+	vals := make([]any, 0, len(cols))
+	valElems := make([]reflect.Value, 0, len(cols))
+	for _, col := range cols {
+		field, ok := s.model.ColumnMap[col]
+		if !ok {
+			return nil, errs.NewErrUnknownColumn(col)
+		}
+		// 用反射创建一个实例 (原本类型的指针类型), 例如: fd.type = int, 那么val是*int
+		val := reflect.New(field.Typ)
+		vals = append(vals, val.Interface())
+		// 此处要调用val.Elem()，因为fd.type = int, 那么val是*int
+		valElems = append(valElems, val.Elem())
+	}
+
+	// select id, first_name, age, last_name
+	err = rows.Scan(vals...)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	// 将vals值塞到tp里面
+	tpValueElem := reflect.ValueOf(tp).Elem()
+	for i, col := range cols {
+		field, ok := s.model.ColumnMap[col]
+		if !ok {
+			return nil, errs.NewErrUnknownColumn(col)
+		}
+		tpValueElem.FieldByName(field.GoName).Set(valElems[i])
+	}
+	return tp, err
 }
 
-func (s *Selector[T]) GetMulti(ctx context.Context) ([]*interface{}, error) {
+func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 	//TODO implement me
 	panic("implement me")
 }

@@ -3,13 +3,13 @@ package orm
 import (
 	"context"
 	"imola/orm/internal/errs"
-	"reflect"
+	"imola/orm/model"
 	"strings"
 )
 
 type Selector[T any] struct {
 	table    string
-	model    *Model
+	model    *model.Model
 	where    []Predicate
 	sBuilder *strings.Builder
 	args     []any
@@ -149,42 +149,10 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	if !rows.Next() {
 		return nil, ErrorNoRows
 	}
-	// 拿到select出来的列
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	// 如何利用cols来解决顺序和类型问题
+
 	tp := new(T)
-	vals := make([]any, 0, len(cols))
-	valElems := make([]reflect.Value, 0, len(cols))
-	for _, col := range cols {
-		field, ok := s.model.ColumnMap[col]
-		if !ok {
-			return nil, errs.NewErrUnknownColumn(col)
-		}
-		// 用反射创建一个实例 (原本类型的指针类型), 例如: fd.type = int, 那么val是*int
-		val := reflect.New(field.Typ)
-		vals = append(vals, val.Interface())
-		// 此处要调用val.Elem()，因为fd.type = int, 那么val是*int
-		valElems = append(valElems, val.Elem())
-	}
-
-	// select id, first_name, age, last_name
-	err = rows.Scan(vals...)
-	if err != nil {
-		return nil, err
-	}
-
-	// 将vals值塞到tp里面
-	tpValueElem := reflect.ValueOf(tp).Elem()
-	for i, col := range cols {
-		field, ok := s.model.ColumnMap[col]
-		if !ok {
-			return nil, errs.NewErrUnknownColumn(col)
-		}
-		tpValueElem.FieldByName(field.GoName).Set(valElems[i])
-	}
+	val := s.db.creator(s.model, tp)
+	err = val.SetColumn(rows)
 	return tp, err
 }
 

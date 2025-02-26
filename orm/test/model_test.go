@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/orm"
 	"imola/orm/internal/errs"
+	"imola/orm/model"
 	"reflect"
 	"testing"
 )
@@ -14,10 +14,10 @@ func TestParseModel(t *testing.T) {
 	testCases := []struct {
 		name      string
 		entity    any
-		wantModel *orm.Model
+		wantModel *model.Model
 		wantErr   error
-		fields    []*orm.Field
-		opts      []orm.ModelOpt
+		fields    []*model.Field
+		opts      []model.ModelOpt
 	}{
 		{
 			name:    "struct",
@@ -37,10 +37,10 @@ func TestParseModel(t *testing.T) {
 		{
 			name:   "pointer",
 			entity: &TestModel{},
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "test_model",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "id",
 					GoName: "Id",
@@ -50,22 +50,25 @@ func TestParseModel(t *testing.T) {
 					Column: "first_name",
 					GoName: "FirstName",
 					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Offset: 8,
 				},
 				{
 					Column: "last_name",
 					GoName: "LastName",
 					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Offset: 24,
 				},
 				{
 					Column: "age",
 					GoName: "Age",
 					Typ:    reflect.TypeOf(int8(0)),
+					Offset: 32,
 				},
 			},
 		},
 	}
 
-	register := orm.Registry{}
+	register := model.Registry{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			m, err := register.Register(tc.entity, tc.opts...)
@@ -73,8 +76,8 @@ func TestParseModel(t *testing.T) {
 			if err != nil {
 				return
 			}
-			fieldMap := make(map[string]*orm.Field)
-			columnMap := make(map[string]*orm.Field)
+			fieldMap := make(map[string]*model.Field)
+			columnMap := make(map[string]*model.Field)
 			for _, field := range tc.fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.Column] = field
@@ -90,17 +93,17 @@ func TestRegistry_get(t *testing.T) {
 	testCases := []struct {
 		name      string
 		entity    any
-		wantModel *orm.Model
+		wantModel *model.Model
 		wantErr   error
-		fields    []*orm.Field
+		fields    []*model.Field
 	}{
 		{
 			name:   "pointer",
 			entity: &TestModel{},
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "test_model",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "id",
 					GoName: "Id",
@@ -110,16 +113,19 @@ func TestRegistry_get(t *testing.T) {
 					Column: "first_name",
 					GoName: "FirstName",
 					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Offset: 8,
 				},
 				{
 					Column: "last_name",
 					GoName: "LastName",
 					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Offset: 24,
 				},
 				{
 					Column: "age",
 					GoName: "Age",
 					Typ:    reflect.TypeOf(int8(0)),
+					Offset: 32,
 				},
 			},
 		},
@@ -131,10 +137,10 @@ func TestRegistry_get(t *testing.T) {
 				}
 				return &TagTable{}
 			}(),
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "tag_table",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "first_name_t",
 					GoName: "FirstName",
@@ -150,10 +156,10 @@ func TestRegistry_get(t *testing.T) {
 				}
 				return &TagTable{}
 			}(),
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "tag_table",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "first_name",
 					GoName: "FirstName",
@@ -174,10 +180,10 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "table name",
 			entity: &CustomTableName{},
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "custom_table_name_t",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "first_name",
 					GoName: "FirstName",
@@ -188,10 +194,10 @@ func TestRegistry_get(t *testing.T) {
 		{
 			name:   "table name ptr",
 			entity: &CustomTableNamePtr{},
-			wantModel: &orm.Model{
+			wantModel: &model.Model{
 				TableName: "custom_table_name_ptr_t",
 			},
-			fields: []*orm.Field{
+			fields: []*model.Field{
 				{
 					Column: "first_name",
 					GoName: "FirstName",
@@ -200,7 +206,7 @@ func TestRegistry_get(t *testing.T) {
 			},
 		},
 	}
-	register := orm.NewRegistry()
+	register := model.NewRegistry()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			m, err := register.Get(tc.entity)
@@ -209,8 +215,8 @@ func TestRegistry_get(t *testing.T) {
 				return
 			}
 
-			fieldMap := make(map[string]*orm.Field)
-			columnMap := make(map[string]*orm.Field)
+			fieldMap := make(map[string]*model.Field)
+			columnMap := make(map[string]*model.Field)
 			for _, field := range tc.fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.Column] = field
@@ -244,8 +250,8 @@ func (c *CustomTableNamePtr) TableName() string {
 }
 
 func TestModelWithTableName(t *testing.T) {
-	registry := orm.NewRegistry()
-	m, err := registry.Register(&TestModel{}, orm.ModelWithTableName("test_model_ttt"))
+	registry := model.NewRegistry()
+	m, err := registry.Register(&TestModel{}, model.ModelWithTableName("test_model_ttt"))
 	require.NoError(t, err)
 	assert.Equal(t, "test_model_ttt", m.TableName)
 }
@@ -273,8 +279,8 @@ func TestModelWithColumnName(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			registry := orm.NewRegistry()
-			model, err := registry.Register(&TestModel{}, orm.ModelWithColumnName(tc.field, tc.colName))
+			registry := model.NewRegistry()
+			model, err := registry.Register(&TestModel{}, model.ModelWithColumnName(tc.field, tc.colName))
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return

@@ -1,4 +1,4 @@
-package orm
+package model
 
 import (
 	"imola/orm/internal/errs"
@@ -57,6 +57,8 @@ type Field struct {
 	Column string
 	// 字段的类型
 	Typ reflect.Type
+	// 字段相对于结构体的偏移量
+	Offset uintptr
 }
 
 // Registry 代表元数据的注册中心
@@ -130,6 +132,7 @@ func (r *Registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
 			// 获取字段类型
 			Typ:    fdType.Type,
 			GoName: fdType.Name,
+			Offset: fdType.Offset,
 		}
 		fieldMap[fdType.Name] = fdMeta
 		columnMap[colName] = fdMeta
@@ -193,4 +196,9 @@ func underscoreName(tableName string) string {
 		}
 	}
 	return string(buf)
+}
+
+// TableName 用户实现这个接口来返回自定义的表名
+type TableName interface {
+	TableName() string
 }

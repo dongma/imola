@@ -66,6 +66,20 @@ func TestSelector_Build(t *testing.T) {
 			builder: orm.NewSelector[TestModel](db).Where(orm.C("Age").Eq(18).Or(orm.C("xxxx").Eq("Tom"))),
 			wantErr: errs.NewErrUnknownField("xxxx"),
 		},
+		{
+			name:    "avg",
+			builder: orm.NewSelector[TestModel](db).Select(orm.Avg("Age")),
+			wantQuery: &orm.Query{
+				SQL: "SELECT AVG(`age`) FROM `test_model`;",
+			},
+		},
+		{
+			name:    "sum",
+			builder: orm.NewSelector[TestModel](db).Select(orm.Sum("Age")),
+			wantQuery: &orm.Query{
+				SQL: "SELECT SUM(`age`) FROM `test_model`;",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

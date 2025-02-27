@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// Selectable 是一个标记接口，代表查找的列或聚合函数等，例如：select xx 这部分
+type Selectable interface {
+	selectable()
+}
+
 type Selector[T any] struct {
 	table    string
 	model    *model.Model
@@ -14,6 +19,7 @@ type Selector[T any] struct {
 	sBuilder *strings.Builder
 	args     []any
 	db       *DB
+	columns  []Selectable
 }
 
 func NewSelector[T any](db *DB) *Selector[T] {
@@ -32,20 +38,17 @@ func (s Selector[T]) Build() (*Query, error) {
 	}
 
 	sBuilder := s.sBuilder
-	sBuilder.WriteString("SELECT * FROM ")
+	sBuilder.WriteString("SELECT ")
+	err = s.buildColumns()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.table == "" {
 		sBuilder.WriteByte('`')
 		sBuilder.WriteString(s.model.TableName)
 		sBuilder.WriteByte('`')
 	} else {
-		//segs := strings.Split(s.table, ".")
-		//sBuilder.WriteByte('`')
-		//sBuilder.WriteString(segs[0])
-		//sBuilder.WriteByte('`')
-		//sBuilder.WriteByte('.')
-		//sBuilder.WriteByte('`')
-		//sBuilder.WriteString(segs[1])
-		//sBuilder.WriteByte('`')
 		sBuilder.WriteString(s.table)
 	}
 
@@ -99,20 +102,54 @@ func (s *Selector[T]) BuildExpression(expr Expression) error {
 			s.sBuilder.WriteByte(')')
 		}
 	case Column:
-		fd, ok := s.model.FieldMap[exp.name]
-		// 字段不对，或者说列不对
-		if !ok {
-			return errs.NewErrUnknownField(exp.name)
-		}
-		s.sBuilder.WriteByte('`')
-		s.sBuilder.WriteString(fd.Column)
-		s.sBuilder.WriteByte('`')
+		return s.buildColumn(exp.name)
 	case value:
 		s.sBuilder.WriteByte('?')
 		s.AddArg(exp.val)
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
 	}
+	return nil
+}
+
+// buildColumns 为了避免方法膨胀，将构建sql列单独抽成一个方法
+func (s *Selector[T]) buildColumns() error {
+	if len(s.columns) == 0 {
+		s.sBuilder.WriteString("*")
+		return nil
+	}
+	for i, col := range s.columns {
+		if i > 0 {
+			s.sBuilder.WriteByte(',')
+		}
+		switch c := col.(type) {
+		case Column:
+			err := s.buildColumn(c.name)
+			if err != nil {
+				return err
+			}
+		case Aggregate:
+			s.sBuilder.WriteString(c.fn)
+			s.sBuilder.WriteByte('(')
+			err := s.buildColumn(c.arg)
+			if err != nil {
+				return err
+			}
+			s.sBuilder.WriteByte(')')
+		}
+	}
+	return nil
+}
+
+func (s *Selector[T]) buildColumn(col string) error {
+	fd, ok := s.model.FieldMap[col]
+	// 字段不对，或者说列不对
+	if !ok {
+		return errs.NewErrUnknownField(col)
+	}
+	s.sBuilder.WriteByte('`')
+	s.sBuilder.WriteString(fd.Column)
+	s.sBuilder.WriteByte('`')
 	return nil
 }
 
@@ -159,4 +196,9 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (s *Selector[T]) Select(cols ...Selectable) *Selector[T] {
+	s.columns = cols
+	return s
 }

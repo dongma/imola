@@ -10,13 +10,19 @@ import (
 
 type unsafeValue struct {
 	model *model.Model
-	val   any
+	// 起始地址
+	address unsafe.Pointer
 }
 
 var _ Creator = NewUnsafeValue
 
 func NewUnsafeValue(model *model.Model, val any) Value {
-	return &unsafeValue{model: model, val: val}
+	// 实体对象的起始地址 address
+	address := reflect.ValueOf(val).UnsafePointer()
+	return &unsafeValue{
+		model:   model,
+		address: address,
+	}
 }
 
 func (u unsafeValue) SetColumn(rows *sql.Rows) error {
@@ -27,15 +33,13 @@ func (u unsafeValue) SetColumn(rows *sql.Rows) error {
 	}
 
 	var vals []any
-	// 实体对象的起始地址 address
-	address := reflect.ValueOf(u.val).UnsafePointer()
 	for _, col := range cols {
 		field, ok := u.model.ColumnMap[col]
 		if !ok {
 			return errs.NewErrUnknownColumn(col)
 		}
 		// 计算字段的地址：起始地址 + 偏移量
-		fdAddress := unsafe.Pointer(uintptr(address) + field.Offset)
+		fdAddress := unsafe.Pointer(uintptr(u.address) + field.Offset)
 		val := reflect.NewAt(field.Typ, fdAddress)
 		vals = append(vals, val.Interface())
 	}

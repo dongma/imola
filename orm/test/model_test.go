@@ -17,7 +17,7 @@ func TestParseModel(t *testing.T) {
 		wantModel *model.Model
 		wantErr   error
 		fields    []*model.Field
-		opts      []model.ModelOpt
+		opts      []model.Option
 	}{
 		{
 			name:    "struct",
@@ -251,7 +251,7 @@ func (c *CustomTableNamePtr) TableName() string {
 
 func TestModelWithTableName(t *testing.T) {
 	registry := model.NewRegistry()
-	m, err := registry.Register(&TestModel{}, model.ModelWithTableName("test_model_ttt"))
+	m, err := registry.Register(&TestModel{}, model.WithTableName("test_model_ttt"))
 	require.NoError(t, err)
 	assert.Equal(t, "test_model_ttt", m.TableName)
 }
@@ -280,7 +280,7 @@ func TestModelWithColumnName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			registry := model.NewRegistry()
-			model, err := registry.Register(&TestModel{}, model.ModelWithColumnName(tc.field, tc.colName))
+			model, err := registry.Register(&TestModel{}, model.WithColumnName(tc.field, tc.colName))
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return

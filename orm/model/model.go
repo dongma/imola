@@ -12,18 +12,18 @@ const (
 	tagColumn = "column"
 )
 
-type ModelOpt func(model *Model) error
+type Option func(model *Model) error
 
-// ModelWithTableName 自定义表名，对表明没有任何校验
-func ModelWithTableName(tableName string) ModelOpt {
+// WithTableName 自定义表名，对表明没有任何校验s
+func WithTableName(tableName string) Option {
 	return func(model *Model) error {
 		model.TableName = tableName
 		return nil
 	}
 }
 
-// ModelWithColumnName 自定义列名
-func ModelWithColumnName(field string, columnName string) ModelOpt {
+// WithColumnName 自定义列名
+func WithColumnName(field string, columnName string) Option {
 	return func(model *Model) error {
 		fd, ok := model.FieldMap[field]
 		if !ok {
@@ -40,7 +40,7 @@ type IRegistry interface {
 	// Get 查找一个模型
 	Get(val any) (*Model, error)
 	// Register 注册一个模型
-	Register(val any, opts ...ModelOpt) (*Model, error)
+	Register(val any, opts ...Option) (*Model, error)
 }
 
 type Model struct {
@@ -53,7 +53,7 @@ type Model struct {
 
 type Field struct {
 	GoName string
-	// 列名
+	// 列名-mysql的，例如：first_name, last_name的格式
 	Column string
 	// 字段的类型
 	Typ reflect.Type
@@ -106,7 +106,7 @@ func (r *Registry) Get(val any) (*Model, error) {
 }*/
 
 // Register 限制只能使用一级指针
-func (r *Registry) Register(entity any, opts ...ModelOpt) (*Model, error) {
+func (r *Registry) Register(entity any, opts ...Option) (*Model, error) {
 	typ := reflect.TypeOf(entity)
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Struct {
 		return nil, errs.ErrPointerOnly

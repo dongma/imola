@@ -29,7 +29,7 @@ func NewSelector[T any](db *DB) *Selector[T] {
 	}
 }
 
-func (s Selector[T]) Build() (*Query, error) {
+func (s *Selector[T]) Build() (*Query, error) {
 	s.sBuilder = &strings.Builder{}
 	var err error
 	s.model, err = s.db.r.Get(new(T))
@@ -44,6 +44,7 @@ func (s Selector[T]) Build() (*Query, error) {
 		return nil, err
 	}
 
+	sBuilder.WriteString(" FROM ")
 	if s.table == "" {
 		sBuilder.WriteByte('`')
 		sBuilder.WriteString(s.model.TableName)

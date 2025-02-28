@@ -49,19 +49,19 @@ func TestParseModel(t *testing.T) {
 				{
 					Column: "first_name",
 					GoName: "FirstName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Typ:    reflect.TypeOf(""),
 					Offset: 8,
-				},
-				{
-					Column: "last_name",
-					GoName: "LastName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
-					Offset: 24,
 				},
 				{
 					Column: "age",
 					GoName: "Age",
 					Typ:    reflect.TypeOf(int8(0)),
+					Offset: 24,
+				},
+				{
+					Column: "last_name",
+					GoName: "LastName",
+					Typ:    reflect.TypeOf(&sql.NullString{}),
 					Offset: 32,
 				},
 			},
@@ -112,19 +112,19 @@ func TestRegistry_get(t *testing.T) {
 				{
 					Column: "first_name",
 					GoName: "FirstName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
+					Typ:    reflect.TypeOf(""),
 					Offset: 8,
-				},
-				{
-					Column: "last_name",
-					GoName: "LastName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
-					Offset: 24,
 				},
 				{
 					Column: "age",
 					GoName: "Age",
 					Typ:    reflect.TypeOf(int8(0)),
+					Offset: 24,
+				},
+				{
+					Column: "last_name",
+					GoName: "LastName",
+					Typ:    reflect.TypeOf(&sql.NullString{}),
 					Offset: 32,
 				},
 			},

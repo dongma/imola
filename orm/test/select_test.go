@@ -100,14 +100,14 @@ func TestSelector_Get(t *testing.T) {
 	db, err := orm.OpenDB(mockDB)
 	require.NoError(t, err)
 	// 对应于query error
-	mock.ExpectQuery("select .*").WillReturnError(errors.New("query error"))
+	mock.ExpectQuery("SELECT .*").WillReturnError(errors.New("query error"))
 	// 对应于no rows
 	rows := sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
-	mock.ExpectQuery("SELECT .* WHERE ID <.").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT .* WHERE `id` <.").WillReturnRows(rows)
 	// 对应于data
 	rows = sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
 	rows.AddRow("1", "Tom", "18", "Jerry")
-	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT .* WHERE `id` =.").WillReturnRows(rows)
 
 	testCases := []struct {
 		name    string

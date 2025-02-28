@@ -1,8 +1,9 @@
-package unsafe
+package test
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"imola/orm/unsafe"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestUnsafeAccessor_Field(t *testing.T) {
 		Age  int
 	}
 	user := &User{Name: "Tom", Age: 18}
-	accessor := NewUnsafeAccessor(user)
+	accessor := unsafe.NewUnsafeAccessor(user)
 	val, err := accessor.Field("Age")
 	require.NoError(t, err)
 	assert.Equal(t, 18, val)

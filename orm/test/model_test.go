@@ -16,7 +16,6 @@ func TestParseModel(t *testing.T) {
 		entity    any
 		wantModel *model.Model
 		wantErr   error
-		fields    []*model.Field
 		opts      []model.Option
 	}{
 		{
@@ -39,30 +38,30 @@ func TestParseModel(t *testing.T) {
 			entity: &TestModel{},
 			wantModel: &model.Model{
 				TableName: "test_model",
-			},
-			fields: []*model.Field{
-				{
-					Column: "id",
-					GoName: "Id",
-					Typ:    reflect.TypeOf(int64(0)),
-				},
-				{
-					Column: "first_name",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
-					Offset: 8,
-				},
-				{
-					Column: "age",
-					GoName: "Age",
-					Typ:    reflect.TypeOf(int8(0)),
-					Offset: 24,
-				},
-				{
-					Column: "last_name",
-					GoName: "LastName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
-					Offset: 32,
+				Fields: []*model.Field{
+					{
+						Column: "id",
+						GoName: "Id",
+						Typ:    reflect.TypeOf(int64(0)),
+					},
+					{
+						Column: "first_name",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+						Offset: 8,
+					},
+					{
+						Column: "age",
+						GoName: "Age",
+						Typ:    reflect.TypeOf(int8(0)),
+						Offset: 24,
+					},
+					{
+						Column: "last_name",
+						GoName: "LastName",
+						Typ:    reflect.TypeOf(&sql.NullString{}),
+						Offset: 32,
+					},
 				},
 			},
 		},
@@ -78,7 +77,7 @@ func TestParseModel(t *testing.T) {
 			}
 			fieldMap := make(map[string]*model.Field)
 			columnMap := make(map[string]*model.Field)
-			for _, field := range tc.fields {
+			for _, field := range tc.wantModel.Fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.Column] = field
 			}
@@ -95,37 +94,36 @@ func TestRegistry_get(t *testing.T) {
 		entity    any
 		wantModel *model.Model
 		wantErr   error
-		fields    []*model.Field
 	}{
 		{
 			name:   "pointer",
 			entity: &TestModel{},
 			wantModel: &model.Model{
 				TableName: "test_model",
-			},
-			fields: []*model.Field{
-				{
-					Column: "id",
-					GoName: "Id",
-					Typ:    reflect.TypeOf(int64(0)),
-				},
-				{
-					Column: "first_name",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
-					Offset: 8,
-				},
-				{
-					Column: "age",
-					GoName: "Age",
-					Typ:    reflect.TypeOf(int8(0)),
-					Offset: 24,
-				},
-				{
-					Column: "last_name",
-					GoName: "LastName",
-					Typ:    reflect.TypeOf(&sql.NullString{}),
-					Offset: 32,
+				Fields: []*model.Field{
+					{
+						Column: "id",
+						GoName: "Id",
+						Typ:    reflect.TypeOf(int64(0)),
+					},
+					{
+						Column: "first_name",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+						Offset: 8,
+					},
+					{
+						Column: "age",
+						GoName: "Age",
+						Typ:    reflect.TypeOf(int8(0)),
+						Offset: 24,
+					},
+					{
+						Column: "last_name",
+						GoName: "LastName",
+						Typ:    reflect.TypeOf(&sql.NullString{}),
+						Offset: 32,
+					},
 				},
 			},
 		},
@@ -139,12 +137,12 @@ func TestRegistry_get(t *testing.T) {
 			}(),
 			wantModel: &model.Model{
 				TableName: "tag_table",
-			},
-			fields: []*model.Field{
-				{
-					Column: "first_name_t",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
+				Fields: []*model.Field{
+					{
+						Column: "first_name_t",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+					},
 				},
 			},
 		},
@@ -158,12 +156,12 @@ func TestRegistry_get(t *testing.T) {
 			}(),
 			wantModel: &model.Model{
 				TableName: "tag_table",
-			},
-			fields: []*model.Field{
-				{
-					Column: "first_name",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
+				Fields: []*model.Field{
+					{
+						Column: "first_name",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+					},
 				},
 			},
 		},
@@ -182,12 +180,12 @@ func TestRegistry_get(t *testing.T) {
 			entity: &CustomTableName{},
 			wantModel: &model.Model{
 				TableName: "custom_table_name_t",
-			},
-			fields: []*model.Field{
-				{
-					Column: "first_name",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
+				Fields: []*model.Field{
+					{
+						Column: "first_name",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+					},
 				},
 			},
 		},
@@ -196,12 +194,12 @@ func TestRegistry_get(t *testing.T) {
 			entity: &CustomTableNamePtr{},
 			wantModel: &model.Model{
 				TableName: "custom_table_name_ptr_t",
-			},
-			fields: []*model.Field{
-				{
-					Column: "first_name",
-					GoName: "FirstName",
-					Typ:    reflect.TypeOf(""),
+				Fields: []*model.Field{
+					{
+						Column: "first_name",
+						GoName: "FirstName",
+						Typ:    reflect.TypeOf(""),
+					},
 				},
 			},
 		},
@@ -217,7 +215,7 @@ func TestRegistry_get(t *testing.T) {
 
 			fieldMap := make(map[string]*model.Field)
 			columnMap := make(map[string]*model.Field)
-			for _, field := range tc.fields {
+			for _, field := range tc.wantModel.Fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.Column] = field
 			}

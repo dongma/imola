@@ -49,6 +49,7 @@ type Model struct {
 	FieldMap map[string]*Field
 	// 列名到字段定义的映射, id->Id, first_name->FirstName
 	ColumnMap map[string]*Field
+	Fields    []*Field
 }
 
 type Field struct {
@@ -115,6 +116,7 @@ func (r *Registry) Register(entity any, opts ...Option) (*Model, error) {
 	numField := elemTyp.NumField()
 	fieldMap := make(map[string]*Field, numField)
 	columnMap := make(map[string]*Field, numField)
+	fields := make([]*Field, 0, numField)
 
 	for i := 0; i < numField; i++ {
 		fdType := elemTyp.Field(i)
@@ -136,6 +138,7 @@ func (r *Registry) Register(entity any, opts ...Option) (*Model, error) {
 		}
 		fieldMap[fdType.Name] = fdMeta
 		columnMap[colName] = fdMeta
+		fields = append(fields, fdMeta)
 	}
 
 	var tableName string
@@ -149,6 +152,7 @@ func (r *Registry) Register(entity any, opts ...Option) (*Model, error) {
 		TableName: tableName,
 		FieldMap:  fieldMap,
 		ColumnMap: columnMap,
+		Fields:    fields,
 	}
 	for _, opt := range opts {
 		err := opt(res)

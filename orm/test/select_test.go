@@ -74,10 +74,55 @@ func TestSelector_Build(t *testing.T) {
 			},
 		},
 		{
+			name:    "avg alias",
+			builder: orm.NewSelector[TestModel](db).Select(orm.Avg("Age").As("avg_age")),
+			wantQuery: &orm.Query{
+				SQL: "SELECT AVG(`age`) AS `avg_age` FROM `test_model`;",
+			},
+		},
+		{
 			name:    "sum",
 			builder: orm.NewSelector[TestModel](db).Select(orm.Sum("Age")),
 			wantQuery: &orm.Query{
 				SQL: "SELECT SUM(`age`) FROM `test_model`;",
+			},
+		},
+		{
+			name:    "raw expr",
+			builder: orm.NewSelector[TestModel](db).Select(orm.Raw("COUNT(DISTINCT `first_name`)")),
+			wantQuery: &orm.Query{
+				SQL: "SELECT COUNT(DISTINCT `first_name`) FROM `test_model`;",
+			},
+		},
+		{
+			name:    "raw expr as predicate",
+			builder: orm.NewSelector[TestModel](db).Where(orm.Raw("`id` < ?", 18).AsPredicate()),
+			wantQuery: &orm.Query{
+				SQL:  "SELECT * FROM `test_model` WHERE (`id` < ?);",
+				Args: []any{18},
+			},
+		},
+		{
+			name:    "raw expr used in predicate",
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Id").Eq(orm.Raw("`age` + ?", 1))),
+			wantQuery: &orm.Query{
+				SQL:  "SELECT * FROM `test_model` WHERE `id` = (`age` + ?);",
+				Args: []any{1},
+			},
+		},
+		{
+			name:    "column alias",
+			builder: orm.NewSelector[TestModel](db).Select(orm.C("FirstName").As("my_name"), orm.C("LastName").As("")),
+			wantQuery: &orm.Query{
+				SQL: "SELECT `first_name` AS `my_name`,`last_name` FROM `test_model`;",
+			},
+		},
+		{
+			name:    "column alias in where",
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Id").As("my_id").Eq(18)),
+			wantQuery: &orm.Query{
+				SQL:  "SELECT * FROM `test_model` WHERE `id` = ?;",
+				Args: []any{18},
 			},
 		},
 	}
@@ -155,7 +200,8 @@ func TestSelector_Get(t *testing.T) {
 }
 
 func memoryDB(t *testing.T) *orm.DB {
-	db, err := orm.Open("sqlite3", "file:test.db?cache=shared&mode=memory")
+	db, err := orm.Open("sqlite3", "file:test.db?cache=shared&mode=memory",
+		orm.DBWithDialect(orm.DialectMySQL))
 	require.NoError(t, err)
 	return db
 }

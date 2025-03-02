@@ -1,22 +1,30 @@
 package orm
 
 import (
+	"context"
 	"imola/orm/internal/errs"
 	"imola/orm/model"
-	"reflect"
 )
 
 type OnDuplicateKeyBuilder[T any] struct {
-	i *Inserter[T]
+	i               *Inserter[T]
+	conflictColumns []string
 }
 
 type OnDuplicateKey struct {
-	assigns []Assignable
+	assigns         []Assignable
+	conflictColumns []string
+}
+
+func (o *OnDuplicateKeyBuilder[T]) ConflictColumns(cols ...string) *OnDuplicateKeyBuilder[T] {
+	o.conflictColumns = cols
+	return o
 }
 
 func (o *OnDuplicateKeyBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
 	o.i.onDuplicateKey = &OnDuplicateKey{
-		assigns: assigns,
+		assigns:         assigns,
+		conflictColumns: o.conflictColumns,
 	}
 	return o.i
 }
@@ -107,13 +115,17 @@ func (i *Inserter[T]) Build() (*Query, error) {
 			i.sb.WriteByte(',')
 		}
 		i.sb.WriteByte('(')
+		unsafe := i.db.creator(i.model, val)
 		for idx, field := range fields {
 			if idx > 0 {
 				i.sb.WriteByte(',')
 			}
 			i.sb.WriteByte('?')
-			// 读出来参数, 使用反射实现
-			arg := reflect.ValueOf(val).Elem().FieldByName(field.GoName).Interface()
+			// 读出来参数, 使用反射实现 (改成了unsafe的方式)
+			arg, err := unsafe.Field(field.GoName)
+			if err != nil {
+				return nil, err
+			}
 			i.AddArg(arg)
 		}
 		i.sb.WriteByte(')')
@@ -131,4 +143,18 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		SQL:  i.sb.String(),
 		Args: i.args,
 	}, nil
+}
+
+func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	query, err := i.Build()
+	if err != nil {
+		return Result{
+			Err: err,
+		}
+	}
+	res, err := i.db.db.Exec(query.SQL, query.Args...)
+	return Result{
+		Err: err,
+		Res: res,
+	}
 }

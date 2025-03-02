@@ -6,6 +6,7 @@ import (
 )
 
 type Value interface {
+	Field(name string) (any, error)
 	SetColumn(rows *sql.Rows) error
 }
 

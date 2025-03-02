@@ -10,14 +10,17 @@ import (
 type reflectValue struct {
 	model *model.Model
 	// 对应于T的指针
-	val any
+	val reflect.Value
 }
 
 // 确保Value签名发生变化后，这边可以得到通知，会发生compile error
 var _ Creator = NewReflectValue
 
 func NewReflectValue(model *model.Model, val any) Value {
-	return &reflectValue{model: model, val: val}
+	return &reflectValue{
+		model: model,
+		val:   reflect.ValueOf(val).Elem(),
+	}
 }
 
 func (r reflectValue) SetColumn(rows *sql.Rows) error {
@@ -48,7 +51,7 @@ func (r reflectValue) SetColumn(rows *sql.Rows) error {
 	}
 
 	// 将vals值塞到tp里面
-	tpValueElem := reflect.ValueOf(r.val).Elem()
+	tpValueElem := r.val
 	for i, col := range cols {
 		field, ok := r.model.ColumnMap[col]
 		if !ok {
@@ -57,4 +60,8 @@ func (r reflectValue) SetColumn(rows *sql.Rows) error {
 		tpValueElem.FieldByName(field.GoName).Set(valElems[i])
 	}
 	return err
+}
+
+func (r reflectValue) Field(name string) (any, error) {
+	return r.val.FieldByName(name).Interface(), nil
 }

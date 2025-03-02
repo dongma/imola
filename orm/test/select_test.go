@@ -14,7 +14,7 @@ import (
 )
 
 func TestSelector_Build(t *testing.T) {
-	db := memoryDB(t)
+	db := memoryDB(t, orm.DBWithDialect(orm.DialectMySQL))
 	testCases := []struct {
 		name      string
 		builder   orm.QueryBuilder
@@ -199,9 +199,9 @@ func TestSelector_Get(t *testing.T) {
 	}
 }
 
-func memoryDB(t *testing.T) *orm.DB {
+func memoryDB(t *testing.T, opts ...orm.DBOption) *orm.DB {
 	db, err := orm.Open("sqlite3", "file:test.db?cache=shared&mode=memory",
-		orm.DBWithDialect(orm.DialectMySQL))
+		opts...)
 	require.NoError(t, err)
 	return db
 }

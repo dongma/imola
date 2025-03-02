@@ -70,6 +70,50 @@ type sqliteDialect struct {
 	standardSQL
 }
 
+func (s sqliteDialect) quoter() byte {
+	return '`'
+}
+
+func (s sqliteDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
+	b.sb.WriteString(" ON CONFLICT(")
+	for i, col := range odk.conflictColumns {
+		if i > 0 {
+			b.sb.WriteByte(',')
+		}
+		err := b.buildColumn(col)
+		if err != nil {
+			return err
+		}
+	}
+	b.sb.WriteString(") DO UPDATE SET ")
+	for idx, assign := range odk.assigns {
+		if idx > 0 {
+			b.sb.WriteByte(',')
+		}
+		switch asi := assign.(type) {
+		case Assignment:
+			fd, ok := b.model.FieldMap[asi.col]
+			if !ok {
+				return errs.NewErrUnknownColumn(asi.col)
+			}
+			b.quote(fd.Column)
+			b.sb.WriteString("=?")
+			b.AddArg(asi.val)
+		case Column:
+			fd, ok := b.model.FieldMap[asi.name]
+			if !ok {
+				return errs.NewErrUnknownField(asi.name)
+			}
+			b.quote(fd.Column)
+			b.sb.WriteString("=excluded.")
+			b.quote(fd.Column)
+		default:
+			return errs.NewErrUnsupportedAssignable(assign)
+		}
+	}
+	return nil
+}
+
 type postgreDialect struct {
 	standardSQL
 }

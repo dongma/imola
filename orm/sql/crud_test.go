@@ -57,9 +57,20 @@ func TestDB(t *testing.T) {
 func TestPreparedStatement(t *testing.T) {
 	db, err := sql.Open("sqlite3", "file:test.db?cache=shared&mode=memory")
 	require.NoError(t, err)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	_, err = db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS test_model(
+		    id INTEGER PRIMARY KEY,
+		    first_name text NOT NULL,
+		    age INTEGER,
+		    last_name text NOT NULL
+		)
+	`)
+	// 完成了数据表的创建
+	require.NoError(t, err)
 	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
 	stmt, err := db.PrepareContext(ctx, "select * from `test_model` where id = ?")
 	require.NoError(t, err)
 	// id=1

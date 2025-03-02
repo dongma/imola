@@ -35,19 +35,20 @@ type Assignable interface {
 
 type Inserter[T any] struct {
 	builder
+	sess           Session
 	values         []*T
-	db             *DB
 	columns        []string
 	onDuplicateKey *OnDuplicateKey
 }
 
-func NewInserter[T any](db *DB) *Inserter[T] {
+func NewInserter[T any](sess Session) *Inserter[T] {
+	core := sess.getCore()
 	return &Inserter[T]{
 		builder: builder{
-			dialect: db.dialect,
-			quoter:  db.dialect.quoter(),
+			core:   core,
+			quoter: core.dialect.quoter(),
 		},
-		db: db,
+		sess: sess,
 	}
 }
 
@@ -75,7 +76,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		return nil, errs.ErrInsertZeroRow
 	}
 	i.sb.WriteString("INSERT INTO ")
-	mdl, err := i.db.r.Get(i.values[0])
+	mdl, err := i.r.Get(i.values[0])
 	i.model = mdl
 	if err != nil {
 		return nil, err
@@ -115,7 +116,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 			i.sb.WriteByte(',')
 		}
 		i.sb.WriteByte('(')
-		unsafe := i.db.creator(i.model, val)
+		unsafe := i.creator(i.model, val)
 		for idx, field := range fields {
 			if idx > 0 {
 				i.sb.WriteByte(',')
@@ -152,7 +153,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 			Err: err,
 		}
 	}
-	res, err := i.db.db.Exec(query.SQL, query.Args...)
+	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
 	return Result{
 		Err: err,
 		Res: res,

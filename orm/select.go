@@ -14,24 +14,25 @@ type Selector[T any] struct {
 	builder
 	table   string
 	where   []Predicate
-	db      *DB
 	columns []Selectable
+	sess    Session
 }
 
-func NewSelector[T any](db *DB) *Selector[T] {
+func NewSelector[T any](sess Session) *Selector[T] {
+	core := sess.getCore()
 	return &Selector[T]{
 		builder: builder{
-			dialect: db.dialect,
-			quoter:  db.dialect.quoter(),
+			core:   core,
+			quoter: core.dialect.quoter(),
 		},
-		db: db,
+		sess: sess,
 	}
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
 	//s.sBuilder = &strings.Builder{}
 	var err error
-	s.model, err = s.db.r.Get(new(T))
+	s.model, err = s.r.Get(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +200,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 		return nil, err
 	}
 
-	db := s.db.db
-	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	// 数据库执行错误，返回err
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	}
 
 	tp := new(T)
-	val := s.db.creator(s.model, tp)
+	val := s.creator(s.model, tp)
 	err = val.SetColumn(rows)
 	return tp, err
 }

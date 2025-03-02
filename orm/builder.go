@@ -2,16 +2,14 @@ package orm
 
 import (
 	"imola/orm/internal/errs"
-	"imola/orm/model"
 	"strings"
 )
 
 type builder struct {
-	sb      strings.Builder
-	args    []any
-	model   *model.Model
-	dialect Dialect
-	quoter  byte
+	core
+	sb     strings.Builder
+	args   []any
+	quoter byte
 }
 
 func (b *builder) quote(name string) {

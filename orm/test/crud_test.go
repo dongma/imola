@@ -1,4 +1,4 @@
-package sql
+package test
 
 import (
 	"context"
@@ -84,11 +84,4 @@ func TestPreparedStatement(t *testing.T) {
 	cancel()
 	// 整个应用关闭时调用
 	db.Close()
-}
-
-type TestModel struct {
-	Id        int64
-	FirstName string
-	Age       int8
-	LastName  *sql.NullString
 }

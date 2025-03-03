@@ -194,26 +194,52 @@ func (s *Selector[T]) From(tbl string) *Selector[T] {
 	return s
 }
 
-func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
+var _ Handler = (&Selector[any]{}).getHandler
+
+func (s *Selector[T]) getHandler(ctx context.Context, qc *QueryContext) *QueryResult {
 	query, err := s.Build()
 	if err != nil {
-		return nil, err
+		return &QueryResult{
+			Err: err,
+		}
 	}
 
 	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	// 数据库执行错误，返回err
 	if err != nil {
-		return nil, err
+		return &QueryResult{
+			Err: err,
+		}
 	}
 	// 确认rows中是否有查询结果，若无，则跑出异常
 	if !rows.Next() {
-		return nil, ErrorNoRows
+		return &QueryResult{
+			Err: ErrorNoRows,
+		}
 	}
 
 	tp := new(T)
 	val := s.creator(s.model, tp)
 	err = val.SetColumn(rows)
-	return tp, err
+	return &QueryResult{
+		Err:    err,
+		Result: tp,
+	}
+}
+
+func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
+	root := s.getHandler
+	for i := len(s.mdls) - 1; i >= 0; i-- {
+		root = s.mdls[i](root)
+	}
+	res := root(ctx, &QueryContext{
+		Type:    "SELECT",
+		Builder: s,
+	})
+	if res.Result != nil {
+		return res.Result.(*T), res.Err
+	}
+	return nil, res.Err
 }
 
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {

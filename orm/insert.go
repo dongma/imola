@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"database/sql"
 	"imola/orm/internal/errs"
 	"imola/orm/model"
 )
@@ -147,15 +148,42 @@ func (i *Inserter[T]) Build() (*Query, error) {
 }
 
 func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	root := i.execHandler
+	for j := len(i.mdls) - 1; j >= 0; j-- {
+		root = i.mdls[j](root)
+	}
+	res := root(ctx, &QueryContext{
+		Type:    "INSERT",
+		Builder: i,
+	})
+	var sqlRes sql.Result
+	if res.Result != nil {
+		sqlRes = res.Result.(sql.Result)
+	}
+	return Result{
+		Err: res.Err,
+		Res: sqlRes,
+	}
+}
+
+var _ Handler = (&Inserter[int]{}).execHandler
+
+func (i *Inserter[T]) execHandler(ctx context.Context, qc *QueryContext) *QueryResult {
 	query, err := i.Build()
 	if err != nil {
-		return Result{
+		return &QueryResult{
 			Err: err,
+			Result: Result{
+				Err: err,
+			},
 		}
 	}
 	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
-	return Result{
+	return &QueryResult{
 		Err: err,
-		Res: res,
+		Result: Result{
+			Err: err,
+			Res: res,
+		},
 	}
 }

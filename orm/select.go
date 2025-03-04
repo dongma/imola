@@ -30,16 +30,15 @@ func NewSelector[T any](sess Session) *Selector[T] {
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
-	//s.sBuilder = &strings.Builder{}
-	var err error
-	s.model, err = s.r.Get(new(T))
-	if err != nil {
-		return nil, err
+	if s.model == nil {
+		var err error
+		s.model, err = s.r.Get(new(T))
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	//sBuilder := s.sBuilder
 	s.sb.WriteString("SELECT ")
-	err = s.buildColumns()
+	err := s.buildColumns()
 	if err != nil {
 		return nil, err
 	}
@@ -228,6 +227,11 @@ func (s *Selector[T]) getHandler(ctx context.Context, qc *QueryContext) *QueryRe
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
+	var err error
+	s.model, err = s.r.Get(new(T))
+	if err != nil {
+		return nil, err
+	}
 	root := s.getHandler
 	for i := len(s.mdls) - 1; i >= 0; i-- {
 		root = s.mdls[i](root)
@@ -235,6 +239,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	res := root(ctx, &QueryContext{
 		Type:    "SELECT",
 		Builder: s,
+		Model:   s.model,
 	})
 	if res.Result != nil {
 		return res.Result.(*T), res.Err

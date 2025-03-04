@@ -1,12 +1,16 @@
 package orm
 
-import "context"
+import (
+	"context"
+	"imola/orm/model"
+)
 
 type QueryContext struct {
 	// 查询类型，记录增删改查
 	Type string
 	// 代表的是查询本身
 	Builder QueryBuilder
+	Model   *model.Model
 }
 
 type QueryResult struct {

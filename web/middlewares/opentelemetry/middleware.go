@@ -8,7 +8,7 @@ import (
 	"imola/web"
 )
 
-const instrumentationName = "/imola/middlewares/opentelemetry"
+const instrumentationName = "/imola/web/middlewares/opentelemetry"
 
 type MiddlewareBuilder struct {
 	Tracer trace.Tracer

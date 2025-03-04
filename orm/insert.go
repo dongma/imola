@@ -77,21 +77,22 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		return nil, errs.ErrInsertZeroRow
 	}
 	i.sb.WriteString("INSERT INTO ")
-	mdl, err := i.r.Get(i.values[0])
-	i.model = mdl
-	if err != nil {
-		return nil, err
+	if i.model == nil {
+		mdl, err := i.r.Get(i.values[0])
+		i.model = mdl
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	// 1、拼接表名
-	i.quote(mdl.TableName)
+	i.quote(i.model.TableName)
 
 	// 2、显示的指定列的顺序, 不能使用 FieldMap因为在Go中其顺序是乱序
-	fields := mdl.Fields
+	fields := i.model.Fields
 	if len(i.columns) > 0 {
 		fields = make([]*model.Field, 0, len(i.columns))
 		for _, fd := range i.columns {
-			fdMeta, ok := mdl.FieldMap[fd]
+			fdMeta, ok := i.model.FieldMap[fd]
 			if !ok {
 				return nil, errs.NewErrUnknownField(fd)
 			}
@@ -110,7 +111,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 
 	// 3、拼接Values的部分, 以及构建Args
 	i.sb.WriteString(" VALUES ")
-	i.args = make([]any, 0, len(mdl.Fields))
+	i.args = make([]any, 0, len(i.model.Fields))
 
 	for j, val := range i.values {
 		if j > 0 {
@@ -134,7 +135,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 	}
 
 	if i.onDuplicateKey != nil {
-		err = i.dialect.buildOnDuplicateKey(&i.builder, i.onDuplicateKey)
+		err := i.dialect.buildOnDuplicateKey(&i.builder, i.onDuplicateKey)
 		if err != nil {
 			return nil, err
 		}
@@ -148,6 +149,13 @@ func (i *Inserter[T]) Build() (*Query, error) {
 }
 
 func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	var err error
+	i.model, err = i.r.Get(new(T))
+	if err != nil {
+		return Result{
+			Err: err,
+		}
+	}
 	root := i.execHandler
 	for j := len(i.mdls) - 1; j >= 0; j-- {
 		root = i.mdls[j](root)
@@ -155,6 +163,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	res := root(ctx, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,
+		Model:   i.model,
 	})
 	var sqlRes sql.Result
 	if res.Result != nil {

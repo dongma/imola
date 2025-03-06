@@ -6,7 +6,9 @@ go 1.22.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/go-sql-driver/mysql v1.9.0
 	github.com/google/uuid v1.6.0
+	github.com/gotomicro/ekit v0.0.6
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -21,6 +23,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

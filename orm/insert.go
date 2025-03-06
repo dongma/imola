@@ -156,11 +156,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 			Err: err,
 		}
 	}
-	root := i.execHandler
-	for j := len(i.mdls) - 1; j >= 0; j-- {
-		root = i.mdls[j](root)
-	}
-	res := root(ctx, &QueryContext{
+	res := exec(ctx, i.sess, i.core, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,
 		Model:   i.model,

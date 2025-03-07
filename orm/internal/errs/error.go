@@ -15,6 +15,10 @@ func NewErrUnsupportedExpression(expr any) error {
 	return fmt.Errorf("orm: 不支持的表达式类型 %v", expr)
 }
 
+func NewErrUnsupportedTable(table any) error {
+	return fmt.Errorf("orm: 不支持的Table Reference类型 %v", table)
+}
+
 func NewErrUnknownField(name string) error {
 	return fmt.Errorf("orm: 未知字段 %s", name)
 }

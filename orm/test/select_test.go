@@ -13,6 +13,75 @@ import (
 	"testing"
 )
 
+func TestSelect_Join(t *testing.T) {
+	type Order struct {
+		Id        int
+		UsingCol1 string
+		UsingCol2 string
+	}
+
+	type OrderDetail struct {
+		OrderId   int
+		ItemId    int
+		UsingCol1 string
+		UsingCol2 string
+	}
+
+	type Item struct {
+		Id int
+	}
+
+	db := memoryDB(t, orm.DBWithDialect(orm.DialectMySQL))
+	testCases := []struct {
+		name      string
+		s         orm.QueryBuilder
+		wantQuery *orm.Query
+		wantErr   error
+	}{
+		{
+			name: "specify table",
+			s:    orm.NewSelector[Order](db).From(orm.TableOf(&OrderDetail{})),
+			wantQuery: &orm.Query{
+				SQL: "SELECT * FROM `order_detail`;",
+			},
+		},
+		{
+			name: "join-using",
+			s: func() orm.QueryBuilder {
+				t1 := orm.TableOf(&Order{})
+				t2 := orm.TableOf(&OrderDetail{})
+				t3 := t1.Join(t2).Using("UsingCol1", "UsingCol2")
+				return orm.NewSelector[Order](db).From(t3)
+			}(),
+			wantQuery: &orm.Query{
+				SQL: "SELECT * FROM (`order` JOIN `order_detail` USING (`using_col1`,`using_col2`));",
+			},
+		},
+		{
+			name: "join-on",
+			s: func() orm.QueryBuilder {
+				t1 := orm.TableOf(&Order{}).As("t1")
+				t2 := orm.TableOf(&OrderDetail{}).As("t2")
+				t3 := t1.Join(t2).On(t1.C("Id").Eq(t2.C("OrderId")))
+				return orm.NewSelector[Order](db).From(t3)
+			}(),
+			wantQuery: &orm.Query{
+				SQL: "SELECT * FROM (`order` AS `t1` JOIN `order_detail` AS `t2` ON `t1`.`id` = `t2`.`order_id`);",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			q, err := tc.s.Build()
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantQuery, q)
+		})
+	}
+}
+
 func TestSelector_Build(t *testing.T) {
 	db := memoryDB(t, orm.DBWithDialect(orm.DialectMySQL))
 	testCases := []struct {

@@ -20,6 +20,7 @@ require (
 	go.opentelemetry.io/otel/exporters/zipkin v1.34.0
 	go.opentelemetry.io/otel/sdk v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
+	go.uber.org/atomic v1.11.0
 )
 
 require (

@@ -9,37 +9,47 @@ import (
 )
 
 var (
-	errKeyNotFound = errors.New("cache: 键不存在")
-	errKeyExpired  = errors.New("cache: 键过期")
+	ErrKeyNotFound = errors.New("cache: 键不存在")
 )
 
+type MemoryCacheOption func(cache *MemoryCache)
+
 type MemoryCache struct {
-	data  map[string]*item
-	mutex sync.RWMutex
-	close chan struct{}
+	Data      map[string]*item
+	Mutex     sync.RWMutex
+	close     chan struct{}
+	onEvicted func(key string, val any)
 }
 
-func NewMemoryCache(interval time.Duration) *MemoryCache {
+func NewMemoryCache(interval time.Duration, opts ...MemoryCacheOption) *MemoryCache {
 	res := &MemoryCache{
-		data: make(map[string]*item),
+		Data:  make(map[string]*item, 100),
+		close: make(chan struct{}),
+		onEvicted: func(key string, val any) {
+		},
 	}
+
+	for _, opt := range opts {
+		opt(res)
+	}
+
 	go func() {
 		ticker := time.NewTicker(interval)
-		counter := 0
 		for {
 			select {
 			case t := <-ticker.C:
-				res.mutex.Lock()
-				for key, val := range res.data {
-					if counter > 1000 {
+				res.Mutex.Lock()
+				i := 0
+				for key, val := range res.Data {
+					if i > 1000 {
 						break
 					}
-					if !val.deadline.IsZero() && val.deadline.Before(t) {
-						delete(res.data, key)
+					if val.deadlineBefore(t) {
+						res.delete(key)
 					}
-					counter++
+					i++
 				}
-				res.mutex.Unlock()
+				res.Mutex.Unlock()
 			case <-res.close:
 				return
 			}
@@ -48,62 +58,68 @@ func NewMemoryCache(interval time.Duration) *MemoryCache {
 	return res
 }
 
+func WithEvictedCallbackOption(fn func(key string, val any)) MemoryCacheOption {
+	return func(cache *MemoryCache) {
+		cache.onEvicted = fn
+	}
+}
+
 func (m *MemoryCache) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+	return m.SetVal(key, value, expiration)
+}
+
+func (m *MemoryCache) SetVal(key string, value any, expiration time.Duration) error {
 	var dl time.Time
 	if expiration > 0 {
 		dl = time.Now().Add(expiration)
 	}
-	m.data[key] = &item{
+	m.Data[key] = &item{
 		val:      value,
 		deadline: dl,
 	}
-
-	// case1: 每个key一个goroutine, 当key过期的时，执行删除操作
-	/*if expiration > 0 {
-		time.AfterFunc(expiration, func() {
-			m.mutex.Lock()
-			defer m.mutex.Unlock()
-			val, ok := m.data[key]
-			// 判断条件，key存在 && key设置了超时时间 && key已过期
-			if ok && !val.deadline.IsZero() && val.deadline.Before(time.Now()) {
-				delete(m.data, key)
-			}
-		})
-	}*/
 	return nil
 }
 
 func (m *MemoryCache) Get(ctx context.Context, key string) (any, error) {
-	m.mutex.RLock()
-	res, ok := m.data[key]
-	m.mutex.RUnlock()
+	m.Mutex.RLock()
+	res, ok := m.Data[key]
+	m.Mutex.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("%w: key: %s", errKeyNotFound, key)
+		return nil, fmt.Errorf("%w, key: %s", ErrKeyNotFound, key)
 	}
 	now := time.Now()
 	if res.deadlineBefore(now) {
-		m.mutex.Lock()
-		defer m.mutex.Unlock()
+		m.Mutex.Lock()
+		defer m.Mutex.Unlock()
 		// 进行了 double check
-		res, ok = m.data[key]
+		res, ok = m.Data[key]
 		if !ok {
-			return nil, fmt.Errorf("%w: key: %s", errKeyNotFound, key)
+			return nil, fmt.Errorf("%w, key: %s", ErrKeyNotFound, key)
 		}
 		if res.deadlineBefore(now) {
-			delete(m.data, key)
-			return nil, fmt.Errorf("%w: key: %s", errKeyExpired, key)
+			m.delete(key)
+			return nil, fmt.Errorf("%w, key: %s", ErrKeyNotFound, key)
 		}
 	}
 	return res.val, nil
 }
 
 func (m *MemoryCache) Delete(ctx context.Context, key string) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	delete(m.data, key)
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+	m.delete(key)
 	return nil
+}
+
+func (m *MemoryCache) delete(key string) {
+	itm, ok := m.Data[key]
+	if !ok {
+		return
+	}
+	delete(m.Data, key)
+	m.onEvicted(key, itm.val)
 }
 
 func (m *MemoryCache) Close() error {

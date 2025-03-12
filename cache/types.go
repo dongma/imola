@@ -15,4 +15,7 @@ type Cache interface {
 
 	// Delete 缓存中删除指定的key
 	Delete(ctx context.Context, key string) error
+
+	// LoadAndDelete 缓存中加载key并返回，并删除key
+	LoadAndDelete(ctx context.Context, key string) (any, error)
 }

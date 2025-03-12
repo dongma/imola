@@ -113,6 +113,18 @@ func (m *MemoryCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+// LoadAndDelete 缓存中加载key并返回，并删除key
+func (m *MemoryCache) LoadAndDelete(ctx context.Context, key string) (any, error) {
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+	res, ok := m.Data[key]
+	if !ok {
+		return nil, ErrKeyNotFound
+	}
+	m.delete(key)
+	return res.val, nil
+}
+
 func (m *MemoryCache) delete(key string) {
 	itm, ok := m.Data[key]
 	if !ok {

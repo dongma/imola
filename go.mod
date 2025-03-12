@@ -7,6 +7,7 @@ go 1.22.0
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-sql-driver/mysql v1.9.0
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gotomicro/ekit v0.0.6
 	github.com/hashicorp/golang-lru v1.0.2
@@ -20,7 +21,7 @@ require (
 	go.opentelemetry.io/otel/exporters/zipkin v1.34.0
 	go.opentelemetry.io/otel/sdk v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
-	go.uber.org/atomic v1.11.0
+	golang.org/x/sync v0.7.0
 )
 
 require (

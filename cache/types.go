@@ -18,4 +18,13 @@ type Cache interface {
 
 	// LoadAndDelete 缓存中加载key并返回，并删除key
 	LoadAndDelete(ctx context.Context, key string) (any, error)
+
+	OnEvicted(func(key string, val []byte))
+}
+
+type Event struct {
+	Key string
+	Val any
+	// 增删改查
+	Type int
 }

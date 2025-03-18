@@ -39,9 +39,7 @@ func Test_setFuncFields(t *testing.T) {
 				proxy.EXPECT().Invoke(gomock.Any(), &rpc.Request{
 					ServiceName: "user-service",
 					MethodName:  "GetById",
-					Args: &rpc.GetByIdReq{
-						Id: 123,
-					},
+					Arg:         []byte(`{"Id":123}`),
 				}).Return(&rpc.Response{}, nil)
 				return proxy
 			},

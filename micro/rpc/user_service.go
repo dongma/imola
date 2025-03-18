@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"log"
 )
 
 type UserService struct {
@@ -19,4 +20,20 @@ type GetByIdReq struct {
 }
 
 type GetByIdResp struct {
+	Msg string
+}
+
+// UserServiceServer 具体的service实现，同时也需实现GetById方法
+type UserServiceServer struct {
+}
+
+func (u *UserServiceServer) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, error) {
+	log.Println(req)
+	return &GetByIdResp{
+		Msg: "hello, world",
+	}, nil
+}
+
+func (u UserServiceServer) Name() string {
+	return "user-service"
 }

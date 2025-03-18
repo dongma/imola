@@ -2,15 +2,18 @@ package rpc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
+	"net"
 	"reflect"
+	"time"
 )
 
 // InitClientProxy 要为GetById之类的函数类型的字段赋值
-func InitClientProxy(service Service) error {
+func InitClientProxy(addr string, service Service) error {
+	client := NewClient(addr)
 	// 在这里初始化一个proxy
-	return SetFuncField(service, nil)
+	return SetFuncField(service, client)
 }
 
 func SetFuncField(service Service, proxy Proxy) error {
@@ -34,25 +37,30 @@ func SetFuncField(service Service, proxy Proxy) error {
 		if fieldVal.CanSet() {
 			// 此处才是真正将本地调用捕捉到的地方
 			fn := func(args []reflect.Value) (results []reflect.Value) {
-
+				retVal := reflect.New(fieldTyp.Type.Out(0).Elem())
 				// args[0]是context
 				ctx := args[0].Interface().(context.Context)
 				// args[1]是req
+				reqData, err := json.Marshal(args[1].Interface())
+				if err != nil {
+					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				}
 				req := &Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
-					Args:        args[1].Interface(),
+					Arg:         reqData,
 				}
 
-				retVal := reflect.New(fieldTyp.Type.Out(0)).Elem()
 				// 要真的发起调用了
 				resp, err := proxy.Invoke(ctx, req)
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
 
-				// 这里怎么办？
-				fmt.Println(resp)
+				err = json.Unmarshal(resp.Data, retVal.Interface())
+				if err != nil {
+					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				}
 				return []reflect.Value{retVal, reflect.Zero(reflect.TypeOf(new(error)).Elem())}
 			}
 			// 我要设置值给 GetById
@@ -62,4 +70,47 @@ func SetFuncField(service Service, proxy Proxy) error {
 	}
 
 	return nil
+}
+
+const numOfLengthBytes = 8
+
+type Client struct {
+	addr string
+}
+
+func NewClient(addr string) *Client {
+	return &Client{
+		addr: addr,
+	}
+}
+
+func (c *Client) Invoke(ctx context.Context, req *Request) (*Response, error) {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	// 正儿八经的把请求发到服务器上
+	resp, err := c.Send(data)
+	if err != nil {
+		return nil, err
+	}
+	return &Response{
+		Data: resp,
+	}, nil
+}
+
+func (c *Client) Send(data []byte) ([]byte, error) {
+	conn, err := net.DialTimeout("tcp", c.addr, time.Second*3)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = conn.Close()
+	}()
+	req := EncodeMsg(data)
+	_, err = conn.Write(req)
+	if err != nil {
+		return nil, err
+	}
+	return ReadMsg(conn)
 }

@@ -13,7 +13,9 @@ type Proxy interface {
 type Request struct {
 	ServiceName string
 	MethodName  string
-	Args        any
+	Arg         []byte
 }
 
-type Response struct{}
+type Response struct {
+	Data []byte
+}

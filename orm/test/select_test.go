@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"imola/orm"
 	"imola/orm/internal/errs"
+	sql2 "imola/orm/sql"
 	"testing"
 )
 
@@ -137,35 +138,35 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "avg",
-			builder: orm.NewSelector[TestModel](db).Select(orm.Avg("Age")),
+			builder: orm.NewSelector[TestModel](db).Select(sql2.Avg("Age")),
 			wantQuery: &orm.Query{
 				SQL: "SELECT AVG(`age`) FROM `test_model`;",
 			},
 		},
 		{
 			name:    "avg alias",
-			builder: orm.NewSelector[TestModel](db).Select(orm.Avg("Age").As("avg_age")),
+			builder: orm.NewSelector[TestModel](db).Select(sql2.Avg("Age").As("avg_age")),
 			wantQuery: &orm.Query{
 				SQL: "SELECT AVG(`age`) AS `avg_age` FROM `test_model`;",
 			},
 		},
 		{
 			name:    "sum",
-			builder: orm.NewSelector[TestModel](db).Select(orm.Sum("Age")),
+			builder: orm.NewSelector[TestModel](db).Select(sql2.Sum("Age")),
 			wantQuery: &orm.Query{
 				SQL: "SELECT SUM(`age`) FROM `test_model`;",
 			},
 		},
 		{
 			name:    "raw expr",
-			builder: orm.NewSelector[TestModel](db).Select(orm.Raw("COUNT(DISTINCT `first_name`)")),
+			builder: orm.NewSelector[TestModel](db).Select(sql2.Raw("COUNT(DISTINCT `first_name`)")),
 			wantQuery: &orm.Query{
 				SQL: "SELECT COUNT(DISTINCT `first_name`) FROM `test_model`;",
 			},
 		},
 		{
 			name:    "raw expr as predicate",
-			builder: orm.NewSelector[TestModel](db).Where(orm.Raw("`id` < ?", 18).AsPredicate()),
+			builder: orm.NewSelector[TestModel](db).Where(sql2.Raw("`id` < ?", 18).AsPredicate()),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE (`id` < ?);",
 				Args: []any{18},
@@ -173,7 +174,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "raw expr used in predicate",
-			builder: orm.NewSelector[TestModel](db).Where(orm.C("Id").Eq(orm.Raw("`age` + ?", 1))),
+			builder: orm.NewSelector[TestModel](db).Where(orm.C("Id").Eq(sql2.Raw("`age` + ?", 1))),
 			wantQuery: &orm.Query{
 				SQL:  "SELECT * FROM `test_model` WHERE `id` = (`age` + ?);",
 				Args: []any{1},
@@ -242,7 +243,7 @@ func TestSelector_Get(t *testing.T) {
 		{
 			name:    "no rows",
 			s:       orm.NewSelector[TestModel](db).Where(orm.C("Id").Lt(1)),
-			wantErr: orm.ErrorNoRows,
+			wantErr: sql2.ErrorNoRows,
 		},
 		{
 			name: "data",

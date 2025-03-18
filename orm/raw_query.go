@@ -3,6 +3,7 @@ package orm
 import (
 	"context"
 	"database/sql"
+	sql2 "imola/orm/sql"
 )
 
 type RawQuerier[T any] struct {
@@ -29,11 +30,11 @@ func RawQuery[T any](sess Session, sql string, args ...interface{}) *RawQuerier[
 	}
 }
 
-func (r *RawQuerier[T]) Exec(ctx context.Context) Result {
+func (r *RawQuerier[T]) Exec(ctx context.Context) sql2.Result {
 	var err error
 	r.model, err = r.r.Get(new(T))
 	if err != nil {
-		return Result{
+		return sql2.Result{
 			Err: err,
 		}
 	}
@@ -44,7 +45,7 @@ func (r *RawQuerier[T]) Exec(ctx context.Context) Result {
 	})
 
 	var sqlRes sql.Result
-	return Result{
+	return sql2.Result{
 		Err: res.Err,
 		Res: sqlRes,
 	}

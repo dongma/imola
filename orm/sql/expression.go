@@ -1,24 +1,24 @@
-package orm
+package sql
 
 // RawExpr 代表原生表达式
 type RawExpr struct {
-	raw  string
-	args []any
+	Raw  string
+	Args []any
 }
 
 func Raw(expr string, args ...any) RawExpr {
 	return RawExpr{
-		raw:  expr,
-		args: args,
+		Raw:  expr,
+		Args: args,
 	}
 }
 
-func (r RawExpr) selectable() {}
+func (r RawExpr) Selectable() {}
 
-func (r RawExpr) expr() {}
+func (r RawExpr) Expr() {}
 
 func (r RawExpr) AsPredicate() Predicate {
 	return Predicate{
-		left: r,
+		Left: r,
 	}
 }

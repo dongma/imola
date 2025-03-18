@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"imola/orm/internal/errs"
 	"imola/orm/model"
+	sql2 "imola/orm/sql"
 )
 
 type OnDuplicateKeyBuilder[T any] struct {
@@ -31,7 +32,7 @@ func (o *OnDuplicateKeyBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
 }
 
 type Assignable interface {
-	assign()
+	Assign()
 }
 
 type Inserter[T any] struct {
@@ -47,7 +48,7 @@ func NewInserter[T any](sess Session) *Inserter[T] {
 	return &Inserter[T]{
 		builder: builder{
 			core:   core,
-			quoter: core.dialect.quoter(),
+			quoter: core.dialect.Quoter(),
 		},
 		sess: sess,
 	}
@@ -135,7 +136,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 	}
 
 	if i.onDuplicateKey != nil {
-		err := i.dialect.buildOnDuplicateKey(&i.builder, i.onDuplicateKey)
+		err := i.dialect.BuildOnDuplicateKey(&i.builder, i.onDuplicateKey)
 		if err != nil {
 			return nil, err
 		}
@@ -148,11 +149,11 @@ func (i *Inserter[T]) Build() (*Query, error) {
 	}, nil
 }
 
-func (i *Inserter[T]) Exec(ctx context.Context) Result {
+func (i *Inserter[T]) Exec(ctx context.Context) sql2.Result {
 	var err error
 	i.model, err = i.r.Get(new(T))
 	if err != nil {
-		return Result{
+		return sql2.Result{
 			Err: err,
 		}
 	}
@@ -165,7 +166,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	if res.Result != nil {
 		sqlRes = res.Result.(sql.Result)
 	}
-	return Result{
+	return sql2.Result{
 		Err: res.Err,
 		Res: sqlRes,
 	}
@@ -178,7 +179,7 @@ func (i *Inserter[T]) execHandler(ctx context.Context, qc *QueryContext) *QueryR
 	if err != nil {
 		return &QueryResult{
 			Err: err,
-			Result: Result{
+			Result: sql2.Result{
 				Err: err,
 			},
 		}
@@ -186,7 +187,7 @@ func (i *Inserter[T]) execHandler(ctx context.Context, qc *QueryContext) *QueryR
 	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
 	return &QueryResult{
 		Err: err,
-		Result: Result{
+		Result: sql2.Result{
 			Err: err,
 			Res: res,
 		},

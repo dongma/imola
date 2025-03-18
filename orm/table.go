@@ -1,122 +1,126 @@
 package orm
 
+import (
+	"imola/orm/sql"
+)
+
 type TableReference interface {
-	table()
+	Table()
 }
 
 // Table 普通表
 type Table struct {
-	alias  string
-	entity any
+	Alias  string
+	Entity any
 }
 
 func (t Table) Join(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  t,
-		right: right,
-		typ:   "JOIN",
+		Left:  t,
+		Right: right,
+		Typ:   "JOIN",
 	}
 }
 
 func (t Table) LeftJoin(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  t,
-		right: right,
-		typ:   "LEFT JOIN",
+		Left:  t,
+		Right: right,
+		Typ:   "LEFT JOIN",
 	}
 }
 
 func (t Table) RightJoin(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  t,
-		right: right,
-		typ:   "RIGHT JOIN",
+		Left:  t,
+		Right: right,
+		Typ:   "RIGHT JOIN",
 	}
 }
 
 func TableOf(entity any) Table {
 	return Table{
-		entity: entity,
+		Entity: entity,
 	}
 }
 
-func (t Table) table() {
+func (t Table) Table() {
 	panic("implement me")
 }
 
 func (t Table) As(alias string) Table {
 	return Table{
-		entity: t.entity,
-		alias:  alias,
+		Entity: t.Entity,
+		Alias:  alias,
 	}
 }
 
 func (t Table) C(name string) Column {
 	return Column{
-		name:  name,
-		table: t,
+		Name:  name,
+		Table: t,
 	}
 }
 
 // JoinBuilder join语句的构建
 type JoinBuilder struct {
-	left  TableReference
-	right TableReference
-	typ   string
+	Left  TableReference
+	Right TableReference
+	Typ   string
 }
 
-func (j *JoinBuilder) On(ps ...Predicate) Join {
+func (j *JoinBuilder) On(ps ...sql.Predicate) Join {
 	return Join{
-		left:  j.left,
-		right: j.right,
-		typ:   j.typ,
-		on:    ps,
+		Left:  j.Left,
+		Right: j.Right,
+		Typ:   j.Typ,
+		On:    ps,
 	}
 }
 
 func (j *JoinBuilder) Using(cols ...string) Join {
 	return Join{
-		left:  j.left,
-		right: j.right,
-		typ:   j.typ,
-		using: cols,
+		Left:  j.Left,
+		Right: j.Right,
+		Typ:   j.Typ,
+		Using: cols,
 	}
 }
 
 // Join join实体本身，支持predicate和on字段
 type Join struct {
-	left  TableReference
-	right TableReference
-	typ   string
-	on    []Predicate
-	using []string
+	Left  TableReference
+	Right TableReference
+	Typ   string
+	On    []sql.Predicate
+	Using []string
 }
 
-func (j Join) table() {
+func (j Join) Table() {
 	panic("implement me")
 }
 
 // Join Join类型本身也支持join
 func (j *Join) Join(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  j,
-		right: right,
-		typ:   "JOIN",
+		Left:  j,
+		Right: right,
+		Typ:   "JOIN",
 	}
 }
 
 func (j *Join) LeftJoin(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  j,
-		right: right,
-		typ:   "LEFT JOIN",
+		Left:  j,
+		Right: right,
+		Typ:   "LEFT JOIN",
 	}
 }
 
 func (j *Join) RightJoin(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
-		left:  j,
-		right: right,
-		typ:   "RIGHT JOIN",
+		Left:  j,
+		Right: right,
+		Typ:   "RIGHT JOIN",
 	}
 }

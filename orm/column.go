@@ -1,82 +1,68 @@
 package orm
 
+import (
+	"imola/orm/sql"
+)
+
 type Column struct {
-	table TableReference
-	name  string
-	alias string
+	Table TableReference
+	Name  string
+	Alias string
 }
 
-func (c Column) assign() {
+func (c Column) Assign() {
 }
 
 func C(name string) Column {
 	return Column{
-		name: name,
+		Name: name,
 	}
 }
 
 func (c Column) As(alias string) Column {
 	return Column{
-		name:  c.name,
-		alias: alias,
-		table: c.table,
+		Name:  c.Name,
+		Alias: alias,
+		Table: c.Table,
 	}
 }
 
 // Eq C("id").Eq(12)
-func (c Column) Eq(arg any) Predicate {
-	return Predicate{
-		left:  c,
-		op:    opEq,
-		right: valueOf(arg),
+func (c Column) Eq(arg any) sql.Predicate {
+	return sql.Predicate{
+		Left:  c,
+		Op:    sql.OpEq,
+		Right: ValueOf(arg),
 	}
 }
 
-func valueOf(arg any) Expression {
+func ValueOf(arg any) sql.Expression {
 	switch val := arg.(type) {
-	case Expression:
+	case sql.Expression:
 		return val
 	default:
-		return value{val: val}
+		return sql.Value{Val: val}
 	}
 }
 
-func (c Column) Lt(arg any) Predicate {
-	return Predicate{
-		left: c,
-		op:   opLt,
-		right: value{
-			val: arg,
+func (c Column) Lt(arg any) sql.Predicate {
+	return sql.Predicate{
+		Left: c,
+		Op:   sql.OpLt,
+		Right: sql.Value{
+			Val: arg,
 		},
 	}
 }
 
-// Not 用法: Not(C("name").Eq("Tom"))
-func Not(p Predicate) Predicate {
-	return Predicate{
-		op:    opNot,
-		right: p,
+// Not 用法: Not(C("Name").Eq("Tom"))
+func Not(p sql.Predicate) sql.Predicate {
+	return sql.Predicate{
+		Op:    sql.OpNot,
+		Right: p,
 	}
 }
 
-// And 用法: C("id").Eq(12).And(C("name").Eq("Tom"))
-func (left Predicate) And(right Predicate) Predicate {
-	return Predicate{
-		left:  left,
-		op:    opAnd,
-		right: right,
-	}
-}
+func (Column) Expr() {}
 
-// Or 用法: C("id").Eq(12).Or(C("name").Eq("Tom"))
-func (left Predicate) Or(right Predicate) Predicate {
-	return Predicate{
-		left:  left,
-		op:    opOr,
-		right: right,
-	}
-}
-
-func (Column) expr() {}
-
-func (Column) selectable() {}
+func (Column) Selectable() {}

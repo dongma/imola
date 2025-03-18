@@ -4,6 +4,7 @@ import (
 	"context"
 	"imola/orm/internal/valuer"
 	"imola/orm/model"
+	"imola/orm/sql"
 )
 
 type core struct {
@@ -42,7 +43,7 @@ func getHandler[T any](ctx context.Context, sess Session, c core, qc *QueryConte
 	// 未查询到结果数据时, 抛出异常 ErrorNoRows
 	if !rows.Next() {
 		return &QueryResult{
-			Err: ErrorNoRows,
+			Err: sql.ErrorNoRows,
 		}
 	}
 	tp := new(T)
@@ -59,7 +60,7 @@ func exec(ctx context.Context, sess Session, c core, qc *QueryContext) *QueryRes
 	if err != nil {
 		return &QueryResult{
 			Err: err,
-			Result: Result{
+			Result: sql.Result{
 				Err: err,
 			},
 		}
@@ -67,7 +68,7 @@ func exec(ctx context.Context, sess Session, c core, qc *QueryContext) *QueryRes
 	res, err := sess.execContext(ctx, query.SQL, query.Args...)
 	return &QueryResult{
 		Err: err,
-		Result: Result{
+		Result: sql.Result{
 			Err: err,
 			Res: res,
 		},

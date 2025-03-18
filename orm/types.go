@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"imola/orm/sql"
 )
 
 // Querier 用于Select语句
@@ -12,7 +13,7 @@ type Querier[T any] interface {
 
 // Executor 用于Insert、Update和Delete
 type Executor interface {
-	Exec(ctx context.Context) Result
+	Exec(ctx context.Context) sql.Result
 }
 
 type QueryBuilder interface {

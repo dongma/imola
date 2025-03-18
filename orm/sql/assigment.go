@@ -1,15 +1,15 @@
-package orm
+package sql
 
 type Assignment struct {
-	col string
-	val any
+	Col string
+	Val any
 }
 
-func (Assignment) assign() {}
+func (Assignment) Assign() {}
 
 func Assign(col string, val any) Assignment {
 	return Assignment{
-		col: col,
-		val: val,
+		Col: col,
+		Val: val,
 	}
 }

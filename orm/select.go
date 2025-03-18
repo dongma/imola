@@ -3,17 +3,18 @@ package orm
 import (
 	"context"
 	"imola/orm/internal/errs"
+	"imola/orm/sql"
 )
 
 // Selectable 是一个标记接口，代表查找的列或聚合函数等，例如：select xx 这部分
 type Selectable interface {
-	selectable()
+	Selectable()
 }
 
 type Selector[T any] struct {
 	builder
 	table   TableReference
-	where   []Predicate
+	where   []sql.Predicate
 	columns []Selectable
 	sess    Session
 }
@@ -23,7 +24,7 @@ func NewSelector[T any](sess Session) *Selector[T] {
 	return &Selector[T]{
 		builder: builder{
 			core:   core,
-			quoter: core.dialect.quoter(),
+			quoter: core.dialect.Quoter(),
 		},
 		sess: sess,
 	}
@@ -67,48 +68,48 @@ func (s *Selector[T]) Build() (*Query, error) {
 	}, nil
 }
 
-// BuildExpression 在这里处理predicate, 构建p.left、p.op和p.right
-func (s *Selector[T]) BuildExpression(expr Expression) error {
+// BuildExpression 在这里处理predicate, 构建p.Left、p.op和p.Right
+func (s *Selector[T]) BuildExpression(expr sql.Expression) error {
 	switch exp := expr.(type) {
 	case nil:
 		return nil
-	case Predicate:
-		_, ok := exp.left.(Predicate)
+	case sql.Predicate:
+		_, ok := exp.Left.(sql.Predicate)
 		if ok {
 			s.sb.WriteByte('(')
 		}
-		if err := s.BuildExpression(exp.left); err != nil {
+		if err := s.BuildExpression(exp.Left); err != nil {
 			return err
 		}
 		if ok {
 			s.sb.WriteByte(')')
 		}
 
-		if exp.op != "" {
+		if exp.Op != "" {
 			s.sb.WriteByte(' ')
-			s.sb.WriteString(exp.op.String())
+			s.sb.WriteString(exp.Op.String())
 			s.sb.WriteByte(' ')
 		}
-		_, ok = exp.right.(Predicate)
+		_, ok = exp.Right.(sql.Predicate)
 		if ok {
 			s.sb.WriteByte('(')
 		}
-		if err := s.BuildExpression(exp.right); err != nil {
+		if err := s.BuildExpression(exp.Right); err != nil {
 			return err
 		}
 		if ok {
 			s.sb.WriteByte(')')
 		}
 	case Column:
-		exp.alias = ""
+		exp.Alias = ""
 		return s.buildColumn(exp)
-	case value:
+	case sql.Value:
 		s.sb.WriteByte('?')
-		s.AddArg(exp.val)
-	case RawExpr:
+		s.AddArg(exp.Val)
+	case sql.RawExpr:
 		s.sb.WriteByte('(')
-		s.sb.WriteString(exp.raw)
-		s.AddArg(exp.args...)
+		s.sb.WriteString(exp.Raw)
+		s.AddArg(exp.Args...)
 		s.sb.WriteByte(')')
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
@@ -132,58 +133,58 @@ func (s *Selector[T]) buildColumns() error {
 			if err != nil {
 				return err
 			}
-		case Aggregate:
-			s.sb.WriteString(c.fn)
+		case sql.Aggregate:
+			s.sb.WriteString(c.Fn)
 			s.sb.WriteByte('(')
-			err := s.buildColumn(Column{name: c.arg})
+			err := s.buildColumn(Column{Name: c.Arg})
 			if err != nil {
 				return err
 			}
 			s.sb.WriteByte(')')
 			// 聚合函数本身的别名
-			if c.alias != "" {
+			if c.Alias != "" {
 				s.sb.WriteString(" AS `")
-				s.sb.WriteString(c.alias)
+				s.sb.WriteString(c.Alias)
 				s.sb.WriteByte('`')
 			}
-		case RawExpr:
-			s.sb.WriteString(c.raw)
-			s.AddArg(c.args...)
+		case sql.RawExpr:
+			s.sb.WriteString(c.Raw)
+			s.AddArg(c.Args...)
 		}
 	}
 	return nil
 }
 
 func (s *Selector[T]) buildColumn(col Column) error {
-	switch table := col.table.(type) {
+	switch table := col.Table.(type) {
 	case nil:
-		fd, ok := s.model.FieldMap[col.name]
+		fd, ok := s.model.FieldMap[col.Name]
 		// 字段不对，或者说列不对
 		if !ok {
-			return errs.NewErrUnknownField(col.name)
+			return errs.NewErrUnknownField(col.Name)
 		}
 		s.quote(fd.Column)
-		if col.alias != "" {
+		if col.Alias != "" {
 			s.sb.WriteString(" AS ")
-			s.quote(col.alias)
+			s.quote(col.Alias)
 		}
 	case Table:
-		m, err := s.r.Get(table.entity)
+		m, err := s.r.Get(table.Entity)
 		if err != nil {
 			return err
 		}
-		fd, ok := m.FieldMap[col.name]
+		fd, ok := m.FieldMap[col.Name]
 		if !ok {
-			return errs.NewErrUnknownField(col.name)
+			return errs.NewErrUnknownField(col.Name)
 		}
-		if table.alias != "" {
-			s.quote(table.alias)
+		if table.Alias != "" {
+			s.quote(table.Alias)
 			s.sb.WriteByte('.')
 		}
 		s.quote(fd.Column)
-		if col.alias != "" {
+		if col.Alias != "" {
 			s.sb.WriteString(" AS ")
-			s.quote(col.alias)
+			s.quote(col.Alias)
 		}
 	default:
 		return errs.NewErrUnsupportedTable(table)
@@ -201,7 +202,7 @@ func (s *Selector[T]) AddArg(vals ...any) {
 	s.args = append(s.args, vals...)
 }
 
-func (s *Selector[T]) Where(conds ...Predicate) *Selector[T] {
+func (s *Selector[T]) Where(conds ...sql.Predicate) *Selector[T] {
 	s.where = conds
 	return s
 }
@@ -231,7 +232,7 @@ func (s *Selector[T]) getHandler(ctx context.Context, qc *QueryContext) *QueryRe
 	// 确认rows中是否有查询结果，若无，则跑出异常
 	if !rows.Next() {
 		return &QueryResult{
-			Err: ErrorNoRows,
+			Err: sql.ErrorNoRows,
 		}
 	}
 
@@ -282,39 +283,39 @@ func (s *Selector[T]) buildTable(table TableReference) error {
 		s.quote(s.model.TableName)
 	case Table:
 		// 这个地方是拿到指定表的元数据
-		m, err := s.r.Get(t.entity)
+		m, err := s.r.Get(t.Entity)
 		if err != nil {
 			return err
 		}
 		s.quote(m.TableName)
-		if t.alias != "" {
+		if t.Alias != "" {
 			s.sb.WriteString(" AS ")
-			s.quote(t.alias)
+			s.quote(t.Alias)
 		}
 	case Join:
 		s.sb.WriteByte('(')
 		// 构造左边
-		err := s.buildTable(t.left)
+		err := s.buildTable(t.Left)
 		if err != nil {
 			return err
 		}
 		s.sb.WriteByte(' ')
-		s.sb.WriteString(t.typ)
+		s.sb.WriteString(t.Typ)
 		s.sb.WriteByte(' ')
 		// 构造右边
-		err = s.buildTable(t.right)
+		err = s.buildTable(t.Right)
 		if err != nil {
 			return err
 		}
 
 		// 拼接 USING (xx, xx)
-		if len(t.using) > 0 {
+		if len(t.Using) > 0 {
 			s.sb.WriteString(" USING (")
-			for i, col := range t.using {
+			for i, col := range t.Using {
 				if i > 0 {
 					s.sb.WriteByte(',')
 				}
-				err = s.buildColumn(Column{name: col})
+				err = s.buildColumn(Column{Name: col})
 				if err != nil {
 					return err
 				}
@@ -322,11 +323,11 @@ func (s *Selector[T]) buildTable(table TableReference) error {
 			s.sb.WriteByte(')')
 		}
 
-		if len(t.on) > 0 {
+		if len(t.On) > 0 {
 			s.sb.WriteString(" ON ")
-			p := t.on[0]
-			for i := 1; i < len(t.on); i++ {
-				p = p.And(t.on[i])
+			p := t.On[0]
+			for i := 1; i < len(t.On); i++ {
+				p = p.And(t.On[i])
 			}
 			if err = s.BuildExpression(p); err != nil {
 				return err

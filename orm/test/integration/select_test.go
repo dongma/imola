@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"imola/orm"
+	"imola/orm/sql"
 	"testing"
 	"time"
 )
@@ -48,7 +49,7 @@ func (s *SelectSuite) TestGet() {
 		{
 			name:    "no row",
 			s:       orm.NewSelector[SimpleStruct](s.db).Where(orm.C("Id").Eq(200)),
-			wantErr: orm.ErrorNoRows,
+			wantErr: sql.ErrorNoRows,
 		},
 	}
 

@@ -2,6 +2,7 @@ package orm
 
 import (
 	"imola/orm/internal/errs"
+	"imola/orm/sql"
 )
 
 var (
@@ -12,18 +13,18 @@ var (
 
 type Dialect interface {
 	// quoter 返回一个引号，引用列名，表的引号
-	quoter() byte
-	buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error
+	Quoter() byte
+	BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error
 }
 
 type standardSQL struct {
 }
 
-func (s standardSQL) quoter() byte {
+func (s standardSQL) Quoter() byte {
 	panic("implement me")
 }
 
-func (s standardSQL) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
+func (s standardSQL) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
 	panic("implement me")
 }
 
@@ -31,29 +32,29 @@ type mysqlDialect struct {
 	standardSQL
 }
 
-func (s mysqlDialect) quoter() byte {
+func (s mysqlDialect) Quoter() byte {
 	return '`'
 }
 
-func (s mysqlDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
+func (s mysqlDialect) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
 	b.sb.WriteString(" ON DUPLICATE KEY UPDATE ")
 	for idx, assign := range odk.assigns {
 		if idx > 0 {
 			b.sb.WriteByte(',')
 		}
 		switch asi := assign.(type) {
-		case Assignment:
-			fd, ok := b.model.FieldMap[asi.col]
+		case sql.Assignment:
+			fd, ok := b.model.FieldMap[asi.Col]
 			if !ok {
-				return errs.NewErrUnknownColumn(asi.col)
+				return errs.NewErrUnknownColumn(asi.Col)
 			}
 			b.quote(fd.Column)
 			b.sb.WriteString("=?")
-			b.AddArg(asi.val)
+			b.AddArg(asi.Val)
 		case Column:
-			fd, ok := b.model.FieldMap[asi.name]
+			fd, ok := b.model.FieldMap[asi.Name]
 			if !ok {
-				return errs.NewErrUnknownField(asi.name)
+				return errs.NewErrUnknownField(asi.Name)
 			}
 			b.quote(fd.Column)
 			b.sb.WriteString("=VALUES(")
@@ -70,11 +71,11 @@ type sqliteDialect struct {
 	standardSQL
 }
 
-func (s sqliteDialect) quoter() byte {
+func (s sqliteDialect) Quoter() byte {
 	return '`'
 }
 
-func (s sqliteDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
+func (s sqliteDialect) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
 	b.sb.WriteString(" ON CONFLICT(")
 	for i, col := range odk.conflictColumns {
 		if i > 0 {
@@ -91,18 +92,18 @@ func (s sqliteDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) erro
 			b.sb.WriteByte(',')
 		}
 		switch asi := assign.(type) {
-		case Assignment:
-			fd, ok := b.model.FieldMap[asi.col]
+		case sql.Assignment:
+			fd, ok := b.model.FieldMap[asi.Col]
 			if !ok {
-				return errs.NewErrUnknownColumn(asi.col)
+				return errs.NewErrUnknownColumn(asi.Col)
 			}
 			b.quote(fd.Column)
 			b.sb.WriteString("=?")
-			b.AddArg(asi.val)
+			b.AddArg(asi.Val)
 		case Column:
-			fd, ok := b.model.FieldMap[asi.name]
+			fd, ok := b.model.FieldMap[asi.Name]
 			if !ok {
-				return errs.NewErrUnknownField(asi.name)
+				return errs.NewErrUnknownField(asi.Name)
 			}
 			b.quote(fd.Column)
 			b.sb.WriteString("=excluded.")

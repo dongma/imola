@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"imola/orm"
 	"imola/orm/internal/errs"
+	sql2 "imola/orm/sql"
 	"testing"
 )
 
@@ -31,8 +32,8 @@ func TestInserterSqlite3_Build(t *testing.T) {
 				LastName:  &sql.NullString{String: "Jerry", Valid: true},
 			}).OnDuplicateKey().
 				ConflictColumns("Id").
-				Update(orm.Assign("FirstName", "Deng"),
-					orm.Assign("Age", 19)),
+				Update(sql2.Assign("FirstName", "Deng"),
+					sql2.Assign("Age", 19)),
 			wantQuery: &orm.Query{
 				SQL: "INSERT INTO `test_model`(`id`,`first_name`,`age`,`last_name`) VALUES (?,?,?,?) " +
 					"ON CONFLICT(`id`) DO UPDATE SET `first_name`=?,`age`=?;",
@@ -150,8 +151,8 @@ func TestInserter_Build(t *testing.T) {
 				FirstName: "Tom",
 				Age:       18,
 				LastName:  &sql.NullString{String: "Jerry", Valid: true},
-			}).OnDuplicateKey().Update(orm.Assign("FirstName", "Deng"),
-				orm.Assign("Age", 19)),
+			}).OnDuplicateKey().Update(sql2.Assign("FirstName", "Deng"),
+				sql2.Assign("Age", 19)),
 			wantQuery: &orm.Query{
 				SQL: "INSERT INTO `test_model`(`id`,`first_name`,`age`,`last_name`) VALUES (?,?,?,?) " +
 					"ON DUPLICATE KEY UPDATE `first_name`=?,`age`=?;",

@@ -1,4 +1,4 @@
-package orm
+package sql
 
 import "imola/orm/internal/errs"
 

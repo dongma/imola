@@ -6,6 +6,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"imola/micro/rpc"
+	"imola/micro/rpc/protocol"
 	"testing"
 )
 
@@ -36,11 +37,11 @@ func Test_setFuncFields(t *testing.T) {
 			name: "user service",
 			mock: func(ctrl *gomock.Controller) rpc.Proxy {
 				proxy := NewMockProxy(ctrl)
-				proxy.EXPECT().Invoke(gomock.Any(), &rpc.Request{
+				proxy.EXPECT().Invoke(gomock.Any(), &protocol.Request{
 					ServiceName: "user-service",
 					MethodName:  "GetById",
-					Arg:         []byte(`{"Id":123}`),
-				}).Return(&rpc.Response{}, nil)
+					Data:        []byte(`{"Id":123}`),
+				}).Return(&protocol.Response{}, nil)
 				return proxy
 			},
 			service: &rpc.UserService{},

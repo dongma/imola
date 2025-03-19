@@ -6,7 +6,7 @@ package test
 
 import (
 	context "context"
-	rpc "imola/micro/rpc"
+	protocol "imola/micro/rpc/protocol"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -73,10 +73,10 @@ func (m *MockProxy) EXPECT() *MockProxyMockRecorder {
 }
 
 // Invoke mocks base method.
-func (m *MockProxy) Invoke(ctx context.Context, req *rpc.Request) (*rpc.Response, error) {
+func (m *MockProxy) Invoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Invoke", ctx, req)
-	ret0, _ := ret[0].(*rpc.Response)
+	ret0, _ := ret[0].(*protocol.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

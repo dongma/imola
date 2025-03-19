@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/silenceper/pool"
+	"imola/micro/rpc/protocol"
 	"net"
 	"reflect"
 	"time"
@@ -11,7 +13,10 @@ import (
 
 // InitClientProxy 要为GetById之类的函数类型的字段赋值
 func InitClientProxy(addr string, service Service) error {
-	client := NewClient(addr)
+	client, err := NewClient(addr)
+	if err != nil {
+		return err
+	}
 	// 在这里初始化一个proxy
 	return SetFuncField(service, client)
 }
@@ -45,10 +50,10 @@ func SetFuncField(service Service, proxy Proxy) error {
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
-				req := &Request{
+				req := &protocol.Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
-					Arg:         reqData,
+					Data:        reqData,
 				}
 
 				// 要真的发起调用了
@@ -75,16 +80,31 @@ func SetFuncField(service Service, proxy Proxy) error {
 const numOfLengthBytes = 8
 
 type Client struct {
-	addr string
+	pool pool.Pool
 }
 
-func NewClient(addr string) *Client {
-	return &Client{
-		addr: addr,
+func NewClient(addr string) (*Client, error) {
+	p, err := pool.NewChannelPool(&pool.Config{
+		InitialCap:  1,
+		MaxCap:      30,
+		MaxIdle:     10,
+		IdleTimeout: time.Minute,
+		Factory: func() (interface{}, error) {
+			return net.DialTimeout("tcp", addr, time.Second*3)
+		},
+		Close: func(v interface{}) error {
+			return v.(net.Conn).Close()
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
+	return &Client{
+		pool: p,
+	}, nil
 }
 
-func (c *Client) Invoke(ctx context.Context, req *Request) (*Response, error) {
+func (c *Client) Invoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error) {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -94,16 +114,17 @@ func (c *Client) Invoke(ctx context.Context, req *Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Response{
+	return &protocol.Response{
 		Data: resp,
 	}, nil
 }
 
 func (c *Client) Send(data []byte) ([]byte, error) {
-	conn, err := net.DialTimeout("tcp", c.addr, time.Second*3)
+	val, err := c.pool.Get()
 	if err != nil {
 		return nil, err
 	}
+	conn := val.(net.Conn)
 	defer func() {
 		_ = conn.Close()
 	}()

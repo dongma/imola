@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"imola/micro/rpc/protocol"
 	"net"
 	"reflect"
 )
@@ -55,7 +56,7 @@ func (s *Server) handleConn(conn net.Conn) error {
 		}
 
 		// 还原调用信息
-		req := &Request{}
+		req := &protocol.Request{}
 		err = json.Unmarshal(reqBs, req)
 		if err != nil {
 			return err
@@ -73,17 +74,17 @@ func (s *Server) handleConn(conn net.Conn) error {
 	}
 }
 
-func (s *Server) Invoke(ctx context.Context, req *Request) (*Response, error) {
+func (s *Server) Invoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error) {
 	// 还原了调用信息，已经知道了service name, method name和参数了，便可以发起业务调用
 	service, ok := s.services[req.ServiceName]
 	if !ok {
 		return nil, errors.New("你要调用的服务不存在")
 	}
-	resp, err := service.Invoke(ctx, req.MethodName, req.Arg)
+	resp, err := service.Invoke(ctx, req.MethodName, req.Data)
 	if err != nil {
 		return nil, err
 	}
-	return &Response{
+	return &protocol.Response{
 		Data: resp,
 	}, err
 }

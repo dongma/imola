@@ -1,21 +1,14 @@
 package rpc
 
-import "context"
+import (
+	"context"
+	"imola/micro/rpc/protocol"
+)
 
 type Service interface {
 	Name() string
 }
 
 type Proxy interface {
-	Invoke(ctx context.Context, req *Request) (*Response, error)
-}
-
-type Request struct {
-	ServiceName string
-	MethodName  string
-	Arg         []byte
-}
-
-type Response struct {
-	Data []byte
+	Invoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error)
 }

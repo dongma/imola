@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"imola/micro/rpc"
 	"imola/micro/rpc/protocol"
+	"imola/micro/rpc/serialize/json"
 	"testing"
 )
 
@@ -48,11 +49,12 @@ func Test_setFuncFields(t *testing.T) {
 		},
 	}
 
+	s := &json.Serializer{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			err := rpc.SetFuncField(tc.service, tc.mock(ctrl))
+			err := rpc.SetFuncField(tc.service, tc.mock(ctrl), s)
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return

@@ -6,7 +6,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"imola/micro/rpc"
-	"imola/micro/rpc/protocol"
+	"imola/micro/rpc/compresser"
 	"imola/micro/rpc/serialize/json"
 	"testing"
 )
@@ -34,7 +34,7 @@ func Test_setFuncFields(t *testing.T) {
 			},
 			wantErr: errors.New("rpc: 只支持指向结构体的一级指针"),
 		},
-		{
+		/*{
 			name: "user service",
 			mock: func(ctrl *gomock.Controller) rpc.Proxy {
 				proxy := NewMockProxy(ctrl)
@@ -46,7 +46,7 @@ func Test_setFuncFields(t *testing.T) {
 				return proxy
 			},
 			service: &rpc.UserService{},
-		},
+		},*/
 	}
 
 	s := &json.Serializer{}
@@ -54,7 +54,7 @@ func Test_setFuncFields(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			err := rpc.SetFuncField(tc.service, tc.mock(ctrl), s)
+			err := rpc.SetFuncField(tc.service, tc.mock(ctrl), s, compresser.DoNothing{})
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return

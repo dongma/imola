@@ -4,21 +4,24 @@ import (
 	"context"
 	"errors"
 	"github.com/silenceper/pool"
+	"imola/micro/rpc/compresser"
 	"imola/micro/rpc/protocol"
 	"imola/micro/rpc/serialize"
 	"imola/micro/rpc/serialize/json"
 	"net"
 	"reflect"
+	"strconv"
 	"time"
 )
 
 // InitService 要为GetById之类的函数类型的字段赋值
 func (c *Client) InitService(service Service) error {
 	// 在这里初始化一个proxy
-	return SetFuncField(service, c, c.serializer)
+	return SetFuncField(service, c, c.serializer, c.compresser)
 }
 
-func SetFuncField(service Service, proxy Proxy, s serialize.Serializer) error {
+func SetFuncField(service Service, proxy Proxy, s serialize.Serializer,
+	c compresser.Compresser) error {
 	if service == nil {
 		return errors.New("rpc: 不支持nil")
 	}
@@ -47,11 +50,27 @@ func SetFuncField(service Service, proxy Proxy, s serialize.Serializer) error {
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
+
+				reqData, err = c.Compress(reqData)
+				if err != nil {
+					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				}
+				meta := make(map[string]string, 2)
+				// 确实设置了超时
+				if deadline, ok := ctx.Deadline(); ok {
+					meta["deadline"] = strconv.FormatInt(deadline.Unix(), 10)
+				}
+				if isOneway(ctx) {
+					meta["one-way"] = "true"
+				}
+
 				req := &protocol.Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
 					Data:        reqData,
 					Serializer:  s.Code(),
+					Meta:        meta,
+					Compresser:  c.Code(),
 				}
 
 				req.CalculateHeaderLength()
@@ -98,9 +117,16 @@ const numOfLengthBytes = 8
 type Client struct {
 	pool       pool.Pool
 	serializer serialize.Serializer
+	compresser compresser.Compresser
 }
 
 type ClientOption func(client *Client)
+
+func ClientWithCompresser(c compresser.Compresser) ClientOption {
+	return func(client *Client) {
+		client.compresser = c
+	}
+}
 
 func ClientWithSerializer(sl serialize.Serializer) ClientOption {
 	return func(client *Client) {
@@ -127,6 +153,7 @@ func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 	res := &Client{
 		pool:       p,
 		serializer: &json.Serializer{},
+		compresser: compresser.DoNothing{},
 	}
 	for _, opt := range opts {
 		opt(res)
@@ -135,27 +162,55 @@ func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 }
 
 func (c *Client) Invoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error) {
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	ch := make(chan struct{})
+	defer func() {
+		close(ch)
+	}()
+	var (
+		resp *protocol.Response
+		err  error
+	)
+	go func() {
+		resp, err = c.doInvoke(ctx, req)
+		ch <- struct{}{}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-ch:
+		return resp, err
+	}
+}
+
+func (c *Client) doInvoke(ctx context.Context, req *protocol.Request) (*protocol.Response, error) {
 	data := protocol.EncodeReq(req)
 	// 正儿八经的把请求发到服务器上
-	resp, err := c.Send(data)
+	resp, err := c.send(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 	return protocol.DecodeResp(resp), nil
 }
 
-func (c *Client) Send(data []byte) ([]byte, error) {
+func (c *Client) send(ctx context.Context, data []byte) ([]byte, error) {
 	val, err := c.pool.Get()
 	if err != nil {
 		return nil, err
 	}
 	conn := val.(net.Conn)
 	defer func() {
-		_ = conn.Close()
+		c.pool.Put(val)
 	}()
 	_, err = conn.Write(data)
 	if err != nil {
 		return nil, err
+	}
+	if isOneway(ctx) {
+		return nil, errors.New("micro: 这是一个oneway调用，你不应该处理任何结果")
 	}
 	return ReadMsg(conn)
 }

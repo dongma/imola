@@ -3,24 +3,30 @@ package rpc
 import (
 	"context"
 	"errors"
+	"imola/micro/rpc/compresser"
 	"imola/micro/rpc/protocol"
 	"imola/micro/rpc/serialize"
 	"imola/micro/rpc/serialize/json"
 	"net"
 	"reflect"
+	"strconv"
+	"time"
 )
 
 type Server struct {
 	services    map[string]ReflectionStub
 	serializers map[uint8]serialize.Serializer
+	compressers map[uint8]compresser.Compresser
 }
 
 func NewServer() *Server {
 	res := &Server{
 		services:    make(map[string]ReflectionStub, 16),
 		serializers: make(map[uint8]serialize.Serializer, 16),
+		compressers: make(map[uint8]compresser.Compresser, 4),
 	}
 	res.RegisterSerializer(&json.Serializer{})
+	res.RegisterCompresser(compresser.DoNothing{})
 	return res
 }
 
@@ -28,11 +34,16 @@ func (s *Server) RegisterSerializer(sl serialize.Serializer) {
 	s.serializers[sl.Code()] = sl
 }
 
+func (s *Server) RegisterCompresser(c compresser.Compresser) {
+	s.compressers[c.Code()] = c
+}
+
 func (s *Server) RegisterService(service Service) {
 	s.services[service.Name()] = ReflectionStub{
 		s:           service,
 		value:       reflect.ValueOf(service),
 		serializers: s.serializers,
+		compressers: s.compressers,
 	}
 }
 
@@ -64,10 +75,23 @@ func (s *Server) handleConn(conn net.Conn) error {
 		if err != nil {
 			return err
 		}
-
 		// 还原调用信息
 		req := protocol.DecodeReq(reqBs)
-		resp, err := s.Invoke(context.Background(), req)
+		ctx := context.Background()
+
+		cancel := func() {}
+		if deadlineStr, ok := req.Meta["deadline"]; ok {
+			if deadline, er := strconv.ParseInt(deadlineStr, 10, 64); er == nil {
+				ctx, cancel = context.WithDeadline(ctx, time.UnixMilli(deadline))
+			}
+		}
+		oneway, ok := req.Meta["one-way"]
+		if ok && oneway == "true" {
+			ctx = CtxWithOneway(ctx)
+		}
+
+		resp, err := s.Invoke(ctx, req)
+		cancel()
 		if err != nil {
 			// 处理业务 error
 			resp.Error = []byte(err.Error())
@@ -94,6 +118,13 @@ func (s *Server) Invoke(ctx context.Context, req *protocol.Request) (*protocol.R
 	if !ok {
 		return resp, errors.New("你要调用的服务不存在")
 	}
+
+	if isOneway(ctx) {
+		go func() {
+			_, _ = service.Invoke(ctx, req)
+		}()
+		return resp, errors.New("micro: 微服务服务端 oneway 请求")
+	}
 	respData, err := service.Invoke(ctx, req)
 	resp.Data = respData
 	if err != nil {
@@ -106,6 +137,7 @@ type ReflectionStub struct {
 	s           Service
 	value       reflect.Value
 	serializers map[uint8]serialize.Serializer
+	compressers map[uint8]compresser.Compresser
 }
 
 func (r *ReflectionStub) Invoke(ctx context.Context, req *protocol.Request) ([]byte, error) {
@@ -114,14 +146,22 @@ func (r *ReflectionStub) Invoke(ctx context.Context, req *protocol.Request) ([]b
 	in := make([]reflect.Value, 2)
 
 	// 暂时我们不知道如何传这个context,所以我们就直接写死
-	in[0] = reflect.ValueOf(context.Background())
+	in[0] = reflect.ValueOf(ctx)
 	inReq := reflect.New(method.Type().In(1).Elem())
 
 	serializer, ok := r.serializers[req.Serializer]
 	if !ok {
 		return nil, errors.New("micro: 不支持序列化协议")
 	}
-	err := serializer.Decode(req.Data, inReq.Interface())
+	c, ok := r.compressers[req.Compresser]
+	if !ok {
+		return nil, errors.New("micro: 不支持压缩算法")
+	}
+	data, err := c.UnCompress(req.Data)
+	if err != nil {
+		return nil, err
+	}
+	err = serializer.Decode(data, inReq.Interface())
 	if err != nil {
 		return nil, err
 	}

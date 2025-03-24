@@ -47,7 +47,7 @@ func (r *Registry) ListServices(ctx context.Context, serviceName string) ([]regi
 	if err != nil {
 		return nil, err
 	}
-	res := make([]registry.ServiceInstance, len(getResp.Kvs))
+	res := make([]registry.ServiceInstance, 0, len(getResp.Kvs))
 	for _, kv := range getResp.Kvs {
 		var si registry.ServiceInstance
 		err = json.Unmarshal(kv.Value, &si)
@@ -71,6 +71,12 @@ func (r *Registry) Subscribe(serviceName string) (<-chan registry.Event, error) 
 		for {
 			select {
 			case resp := <-watchResp:
+				if resp.Err() != nil {
+					continue
+				}
+				if resp.Canceled {
+					return
+				}
 				for range resp.Events {
 					res <- registry.Event{}
 				}

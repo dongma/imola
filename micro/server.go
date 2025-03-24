@@ -39,7 +39,7 @@ func (s *Server) Start(addr string) error {
 	s.listener = listener
 
 	// 有注册中心，要注册了
-	if s.registry == nil {
+	if s.registry != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), s.registryTimeout)
 		defer cancel()
 		err = s.registry.Register(ctx, registry.ServiceInstance{

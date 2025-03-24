@@ -3,20 +3,31 @@ package grpc
 import (
 	"context"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"imola/micro"
 	"imola/micro/proto/gen"
+	"imola/micro/registry/etcd"
 	"testing"
 	"time"
 )
 
 func TestClient(t *testing.T) {
-	cc, err := grpc.Dial("registry:///localhost:8081", grpc.WithInsecure(), grpc.WithResolvers(&micro.GrpcResolverBuilder{}))
+	etcdClient, err := clientv3.New(clientv3.Config{
+		Endpoints: []string{"localhost:2379"},
+	})
 	require.NoError(t, err)
-	client := gen.NewUserServiceClient(cc)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	r, err := etcd.NewRegistry(etcdClient)
+	require.NoError(t, err)
+
+	client, err := micro.NewClient(micro.ClientInsecure(), micro.ClientWithRegistry(r, time.Second*3))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	resp, err := client.GetById(ctx, &gen.GetByIdReq{Id: 13})
+	require.NoError(t, err)
+	cc, err := client.Dial(ctx, "user-service")
+	require.NoError(t, err)
+
+	uc := gen.NewUserServiceClient(cc)
+	resp, err := uc.GetById(ctx, &gen.GetByIdReq{Id: 13})
 	require.NoError(t, err)
 	t.Log(resp)
 }

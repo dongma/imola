@@ -22,4 +22,5 @@ type ServiceInstance struct {
 }
 
 type Event struct {
+	Type string
 }

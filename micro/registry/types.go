@@ -19,6 +19,8 @@ type ServiceInstance struct {
 	Name string
 	// Address 就是最关键的，定位信息
 	Address string
+	// 再加一个分组的字段
+	Group string
 }
 
 type Event struct {

@@ -16,6 +16,7 @@ type Server struct {
 	registry        registry.Registry
 	registryTimeout time.Duration
 	listener        net.Listener
+	group           string
 }
 
 func NewServer(name string, opts ...ServerOption) (*Server, error) {
@@ -46,6 +47,7 @@ func (s *Server) Start(addr string) error {
 			Name: s.name,
 			// 你的定位信息从哪儿来？在容器中时，可以从环境变量中读取
 			Address: listener.Addr().String(),
+			Group:   s.group,
 		})
 		if err != nil {
 			return err
@@ -60,7 +62,7 @@ func (s *Server) Start(addr string) error {
 	return err
 }
 
-func (s *Server) Close(ctx context.Context) error {
+func (s *Server) Close() error {
 	if s.registry != nil {
 		err := s.registry.Close()
 		if err != nil {
@@ -74,5 +76,11 @@ func (s *Server) Close(ctx context.Context) error {
 func ServerWithRegistry(registry registry.Registry) ServerOption {
 	return func(server *Server) {
 		server.registry = registry
+	}
+}
+
+func ServerWithGroup(group string) ServerOption {
+	return func(server *Server) {
+		server.group = group
 	}
 }

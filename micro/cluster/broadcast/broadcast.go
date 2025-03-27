@@ -1,0 +1,64 @@
+package broadcast
+
+import (
+	"context"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"imola/micro/registry"
+)
+
+type ClusterBuilder struct {
+	registry registry.Registry
+	service  string
+	dialOpts []grpc.DialOption
+}
+
+func NewClusterBuilder(service string, r registry.Registry, dOpts ...grpc.DialOption) *ClusterBuilder {
+	return &ClusterBuilder{
+		service:  service,
+		registry: r,
+		dialOpts: dOpts,
+	}
+}
+
+func (c ClusterBuilder) BuildUnaryInterceptor() grpc.UnaryClientInterceptor {
+	// method: users.UserService/GetById
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if !isBroadCast(ctx) {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+		instances, err := c.registry.ListServices(ctx, c.service)
+		if err != nil {
+			return err
+		}
+
+		var eg errgroup.Group
+		for _, ins := range instances {
+			addr := ins.Address
+			eg.Go(func() error {
+				insCC, er := grpc.Dial(addr, c.dialOpts...)
+				if er != nil {
+					return er
+				}
+				// 对每一个节点 发起调用
+				er = invoker(ctx, method, req, reply, insCC, opts...)
+				return er
+			})
+		}
+		// 全部调用完毕
+		return eg.Wait()
+	}
+}
+
+func UseBroadcast(ctx context.Context) context.Context {
+	return context.WithValue(ctx, broadcastKey{}, true)
+}
+
+type broadcastKey struct {
+}
+
+func isBroadCast(ctx context.Context) bool {
+	val, ok := ctx.Value(broadcastKey{}).(bool)
+	return ok && val
+}

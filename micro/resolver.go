@@ -2,6 +2,7 @@ package micro
 
 import (
 	"context"
+	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 	"imola/micro/registry"
 	"time"
@@ -74,7 +75,10 @@ func (g *grpcResolver) resolve() {
 	}
 	address := make([]resolver.Address, 0, len(instances))
 	for _, si := range instances {
-		address = append(address, resolver.Address{Addr: si.Address})
+		address = append(address, resolver.Address{
+			Addr:       si.Address,
+			Attributes: attributes.New("group", si.Group),
+		})
 	}
 	err = g.cc.UpdateState(resolver.State{Addresses: address})
 	if err != nil {

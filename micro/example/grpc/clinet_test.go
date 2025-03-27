@@ -23,7 +23,7 @@ func TestClient(t *testing.T) {
 
 	client, err := micro.NewClient(micro.ClientInsecure(),
 		micro.ClientWithRegistry(r, time.Second*3),
-		micro.ClientWithPickerBuilder("GROUP_ROUND_ROBIN", &round_robin.Balancer{
+		micro.ClientWithPickedBuilder("GROUP_ROUND_ROBIN", &round_robin.Builder{
 			Filter: loadbalance.GroupFilterBuilder{}.Build(),
 		}))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

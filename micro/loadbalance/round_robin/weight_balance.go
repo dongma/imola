@@ -4,7 +4,6 @@ import (
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"math"
-	"strconv"
 	"sync"
 )
 
@@ -57,11 +56,11 @@ type WeightBalancerBuilder struct {
 func (w *WeightBalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	cs := make([]*weightConn, 0, len(info.ReadySCs))
 	for sub, subInfo := range info.ReadySCs {
-		weightStr := subInfo.Address.Attributes.Value("weight").(string)
-		weight, err := strconv.ParseUint(weightStr, 10, 64)
-		if err != nil {
-			panic(err)
-		}
+		weight := subInfo.Address.Attributes.Value("weight").(uint32)
+		//weight, err := strconv.ParseUint(weightStr, 10, 64)
+		//if err != nil {
+		//	panic(err)
+		//}
 		cs = append(cs, &weightConn{
 			c:               sub,
 			weight:          uint32(weight),

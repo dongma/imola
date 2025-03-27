@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/balancer"
+	"google.golang.org/grpc/balancer/base"
 	"imola/micro/registry"
 	"time"
 )
@@ -14,11 +16,20 @@ type Client struct {
 	insecure bool
 	r        registry.Registry
 	timeout  time.Duration
+	balancer balancer.Builder
 }
 
 func ClientInsecure() ClientOption {
 	return func(c *Client) {
 		c.insecure = true
+	}
+}
+
+func ClientWithPickedBuilder(name string, b base.PickerBuilder) ClientOption {
+	return func(client *Client) {
+		builder := base.NewBalancerBuilder(name, b, base.Config{HealthCheck: true})
+		balancer.Register(builder)
+		client.balancer = builder
 	}
 }
 

@@ -12,13 +12,13 @@ type Balancer struct {
 	index       int32
 	connections []subConn
 	length      int32
-	Filter      loadbalance.Filter
+	filter      loadbalance.Filter
 }
 
 func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	candidates := make([]subConn, 0, len(b.connections))
 	for _, conn := range b.connections {
-		if b.Filter != nil && !b.Filter(info, conn.addr) {
+		if b.filter != nil && !b.filter(info, conn.addr) {
 			continue
 		}
 		candidates = append(candidates, conn)
@@ -37,7 +37,7 @@ func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 }
 
 type Builder struct {
-	filter loadbalance.Filter
+	Filter loadbalance.Filter
 }
 
 func (b *Builder) Build(info base.PickerBuildInfo) balancer.Picker {
@@ -52,7 +52,7 @@ func (b *Builder) Build(info base.PickerBuildInfo) balancer.Picker {
 		connections: connections,
 		index:       -1,
 		length:      int32(len(info.ReadySCs)),
-		filter:      b.filter,
+		filter:      b.Filter,
 	}
 }
 

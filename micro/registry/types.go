@@ -20,7 +20,8 @@ type ServiceInstance struct {
 	// Address 就是最关键的，定位信息
 	Address string
 	// 再加一个分组的字段
-	Group string
+	Group  string
+	Weight uint32
 }
 
 type Event struct {

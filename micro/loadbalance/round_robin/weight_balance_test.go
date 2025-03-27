@@ -11,7 +11,7 @@ func TestWeightBalancer_Pick(t *testing.T) {
 	wb := &WeightBalancer{
 		connections: []*weightConn{
 			{
-				c: SubConn{
+				c: WeightSubConn{
 					name: "weight-5",
 				},
 				weight:          5,
@@ -19,7 +19,7 @@ func TestWeightBalancer_Pick(t *testing.T) {
 				currentWeight:   5,
 			},
 			{
-				c: SubConn{
+				c: WeightSubConn{
 					name: "weight-4",
 				},
 				weight:          4,
@@ -27,7 +27,7 @@ func TestWeightBalancer_Pick(t *testing.T) {
 				currentWeight:   4,
 			},
 			{
-				c: SubConn{
+				c: WeightSubConn{
 					name: "weight-3",
 				},
 				weight:          3,
@@ -39,21 +39,26 @@ func TestWeightBalancer_Pick(t *testing.T) {
 
 	pickRes, err := wb.Pick(balancer.PickInfo{})
 	require.NoError(t, err)
-	assert.Equal(t, "weight-5", pickRes.SubConn.(SubConn).name)
+	assert.Equal(t, "weight-5", pickRes.SubConn.(WeightSubConn).name)
 
 	pickRes, err = wb.Pick(balancer.PickInfo{})
 	require.NoError(t, err)
-	assert.Equal(t, "weight-4", pickRes.SubConn.(SubConn).name)
+	assert.Equal(t, "weight-4", pickRes.SubConn.(WeightSubConn).name)
 
 	pickRes, err = wb.Pick(balancer.PickInfo{})
 	require.NoError(t, err)
-	assert.Equal(t, "weight-3", pickRes.SubConn.(SubConn).name)
+	assert.Equal(t, "weight-3", pickRes.SubConn.(WeightSubConn).name)
 
 	pickRes, err = wb.Pick(balancer.PickInfo{})
 	require.NoError(t, err)
-	assert.Equal(t, "weight-5", pickRes.SubConn.(SubConn).name)
+	assert.Equal(t, "weight-5", pickRes.SubConn.(WeightSubConn).name)
 
 	pickRes, err = wb.Pick(balancer.PickInfo{})
 	require.NoError(t, err)
-	assert.Equal(t, "weight-4", pickRes.SubConn.(SubConn).name)
+	assert.Equal(t, "weight-4", pickRes.SubConn.(WeightSubConn).name)
+}
+
+type WeightSubConn struct {
+	balancer.SubConn
+	name string
 }

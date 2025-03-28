@@ -2,9 +2,11 @@ package broadcast
 
 import (
 	"context"
-	"golang.org/x/sync/errgroup"
+	"fmt"
 	"google.golang.org/grpc"
 	"imola/micro/registry"
+	"reflect"
+	"sync"
 )
 
 type ClusterBuilder struct {
@@ -25,40 +27,63 @@ func (c ClusterBuilder) BuildUnaryInterceptor() grpc.UnaryClientInterceptor {
 	// method: users.UserService/GetById
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		if !isBroadCast(ctx) {
+		ok, ch := isBroadCast(ctx)
+		if !ok {
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
+		defer func() {
+			close(ch)
+		}()
+
 		instances, err := c.registry.ListServices(ctx, c.service)
 		if err != nil {
 			return err
 		}
 
-		var eg errgroup.Group
+		var wg sync.WaitGroup
+		typ := reflect.TypeOf(reply).Elem()
+		wg.Add(len(instances))
 		for _, ins := range instances {
 			addr := ins.Address
-			eg.Go(func() error {
+			go func() {
 				insCC, er := grpc.Dial(addr, c.dialOpts...)
 				if er != nil {
-					return er
+					ch <- Resp{Err: er}
+					wg.Done()
+					return
 				}
+				newReply := reflect.New(typ).Interface()
 				// 对每一个节点 发起调用
-				er = invoker(ctx, method, req, reply, insCC, opts...)
-				return er
-			})
+				err = invoker(ctx, method, req, newReply, insCC, opts...)
+				// 如果没有人接收，就会堵住
+				select {
+				case <-ctx.Done():
+					err = fmt.Errorf("响应没有人接收, %w", ctx.Err())
+				case ch <- Resp{Err: err, Reply: newReply}:
+				}
+				wg.Done()
+			}()
 		}
+		wg.Wait()
 		// 全部调用完毕
-		return eg.Wait()
+		return nil
 	}
 }
 
-func UseBroadcast(ctx context.Context) context.Context {
-	return context.WithValue(ctx, broadcastKey{}, true)
+func UseBroadcast(ctx context.Context) (context.Context, <-chan Resp) {
+	ch := make(chan Resp)
+	return context.WithValue(ctx, broadcastKey{}, ch), ch
 }
 
 type broadcastKey struct {
 }
 
-func isBroadCast(ctx context.Context) bool {
-	val, ok := ctx.Value(broadcastKey{}).(bool)
-	return ok && val
+func isBroadCast(ctx context.Context) (bool, chan Resp) {
+	val, ok := ctx.Value(broadcastKey{}).(chan Resp)
+	return ok, val
+}
+
+type Resp struct {
+	Err   error
+	Reply any
 }

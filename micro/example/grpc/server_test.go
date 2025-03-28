@@ -31,10 +31,11 @@ func TestServer(t *testing.T) {
 		require.NoError(t, err)
 		us := &UserServiceServer{group: group}
 		gen.RegisterUserServiceServer(server, us)
+		port := fmt.Sprintf(":808%d", i+1)
 		// 启动8081，8082和8083 3个服务
 		eg.Go(func() error {
 			// 在这里调用Start方法，相当于us已完全准备好了
-			return server.Start(fmt.Sprintf(":808%d", i+1))
+			return server.Start(port)
 		})
 	}
 	err = eg.Wait()

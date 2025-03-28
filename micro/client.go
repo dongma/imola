@@ -16,7 +16,7 @@ type Client struct {
 	insecure bool
 	r        registry.Registry
 	timeout  time.Duration
-	balancer balancer.Builder
+	builder  balancer.Builder
 }
 
 func ClientInsecure() ClientOption {
@@ -29,7 +29,7 @@ func ClientWithPickedBuilder(name string, b base.PickerBuilder) ClientOption {
 	return func(client *Client) {
 		builder := base.NewBalancerBuilder(name, b, base.Config{HealthCheck: true})
 		balancer.Register(builder)
-		client.balancer = builder
+		client.builder = builder
 	}
 }
 
@@ -59,6 +59,10 @@ func (c *Client) Dial(ctx context.Context, service string, dialOpts ...grpc.Dial
 	}
 	if c.insecure {
 		opts = append(opts, grpc.WithInsecure())
+	}
+	if c.builder != nil {
+		opts = append(opts, grpc.WithDefaultServiceConfig(
+			fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.builder)))
 	}
 	if len(dialOpts) > 0 {
 		opts = append(opts, dialOpts...)

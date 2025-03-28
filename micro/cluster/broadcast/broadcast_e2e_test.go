@@ -51,7 +51,12 @@ func TestUseBroadcast(t *testing.T) {
 	defer cancel()
 	require.NoError(t, err)
 
-	ctx = UseBroadcast(ctx)
+	ctx, respChan := UseBroadcast(ctx)
+	go func() {
+		for r := range respChan {
+			fmt.Println(r.Err, r.Reply)
+		}
+	}()
 	bd := NewClusterBuilder("user-service", r, grpc.WithInsecure())
 	cc, err := client.Dial(ctx, "user-service", grpc.WithUnaryInterceptor(bd.BuildUnaryInterceptor()))
 	require.NoError(t, err)

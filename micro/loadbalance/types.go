@@ -14,8 +14,8 @@ type GroupFilterBuilder struct {
 
 func (g GroupFilterBuilder) Build() Filter {
 	return func(info balancer.PickInfo, addr resolver.Address) bool {
-		target := addr.Attributes.Value("group").(string)
-		input := info.Ctx.Value("group").(string)
+		target, _ := addr.Attributes.Value("group").(string)
+		input, _ := info.Ctx.Value("group").(string)
 		return target == input
 	}
 }

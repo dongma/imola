@@ -61,8 +61,8 @@ func (c *Client) Dial(ctx context.Context, service string, dialOpts ...grpc.Dial
 		opts = append(opts, grpc.WithInsecure())
 	}
 	if c.builder != nil {
-		opts = append(opts, grpc.WithDefaultServiceConfig(
-			fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.builder)))
+		strategy := fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.builder.Name())
+		opts = append(opts, grpc.WithDefaultServiceConfig(strategy))
 	}
 	if len(dialOpts) > 0 {
 		opts = append(opts, dialOpts...)

@@ -6,16 +6,30 @@ import (
 )
 
 type ConcurrentBlockingQueue[T any] struct {
-	mutex    *sync.Mutex
-	data     []T
-	notfull  *sync.Cond
-	notempty *sync.Cond
+	mutex   *sync.Mutex
+	data    []T
+	maxSize int
+
+	notEmptyCond *Cond
+	notFullCond  *Cond
+
+	count int
+	head  int
+	tail  int
+	zero  T
 }
 
 // NewConcurrentBlockingQueue 创建并发队列
 func NewConcurrentBlockingQueue[T any](maxSize int) *ConcurrentBlockingQueue[T] {
+	m := &sync.Mutex{}
 	return &ConcurrentBlockingQueue[T]{
-		data: make([]T, 0, maxSize),
+		// 即使是ring buffer, 一次性分配完内存，也是有缺陷的；如果不想一开始就把所有内存都分配好，
+		// 可以使用链表
+		data:         make([]T, maxSize),
+		mutex:        m,
+		maxSize:      maxSize,
+		notEmptyCond: NewCond(m),
+		notFullCond:  NewCond(m),
 	}
 }
 
@@ -24,13 +38,22 @@ func (c *ConcurrentBlockingQueue[T]) Enqueue(ctx context.Context, elem T) error 
 		return ctx.Err()
 	}
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	for c.IsFull() {
-		// 我阻塞我自己，直到有人唤醒我
-		c.notfull.Wait()
+	for c.isFull() {
+		err := c.notFullCond.WaitWithTimeout(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	c.data = append(c.data, elem)
+
+	c.data[c.tail] = elem
+	c.tail++
+	if c.tail == c.maxSize {
+		c.tail = 0
+	}
+
+	c.notEmptyCond.Broadcast()
+	c.mutex.Unlock()
+	// 没有人等notEmpty的信号，这一句就会阻塞住
 	return nil
 }
 
@@ -40,23 +63,50 @@ func (c *ConcurrentBlockingQueue[T]) Dequeue(ctx context.Context) (T, error) {
 		return elem, ctx.Err()
 	}
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	for c.IsEmpty() {
-		c.notempty.Wait()
+	for c.isEmpty() {
+		err := c.notEmptyCond.WaitWithTimeout(ctx)
+		if err != nil {
+			var t T
+			return t, err
+		}
 	}
-	elem := c.data[0]
-	c.data = c.data[1:]
-	return elem, nil
+
+	// 这里要不要考虑缩容
+	t := c.data[c.head]
+	c.data[c.head] = c.zero
+	c.head++
+	c.count--
+	if c.head == c.maxSize {
+		c.head = 0
+	}
+	c.notFullCond.Broadcast()
+	c.mutex.Unlock()
+	// 没有人等notFull的信号，这一句就会阻塞住
+	return t, nil
 }
 
 func (c *ConcurrentBlockingQueue[T]) IsEmpty() bool {
-	return len(c.data) == 0
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.isEmpty()
+}
+
+func (c *ConcurrentBlockingQueue[T]) isEmpty() bool {
+	return c.count == 0
 }
 
 func (c *ConcurrentBlockingQueue[T]) Len() uint64 {
-	return uint64(len(c.data))
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return uint64(c.count)
 }
 
 func (c *ConcurrentBlockingQueue[T]) IsFull() bool {
-	panic("implement me")
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.isFull()
+}
+
+func (c *ConcurrentBlockingQueue[T]) isFull() bool {
+	return c.count == c.maxSize
 }

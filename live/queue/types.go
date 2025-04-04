@@ -13,5 +13,5 @@ type Queue[T any] interface {
 
 	IsEmpty() bool
 
-	Len() int
+	Len() uint64
 }

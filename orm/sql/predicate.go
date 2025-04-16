@@ -13,6 +13,7 @@ const (
 	OpAnd Op = "AND"
 	OpOr  Op = "OR"
 	OpLt  Op = "<"
+	OpRt  Op = ">"
 )
 
 type Predicate struct {

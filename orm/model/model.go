@@ -50,7 +50,14 @@ type Model struct {
 	// 列名到字段定义的映射, id->Id, first_name->FirstName
 	ColumnMap map[string]*Field
 	Fields    []*Field
+
+	// 分库分表直播课内容
+	SK string
+	Sf ShardingFunc
 }
+
+// ShardingFunc 分库分表的函数，按指定的业务字段执行
+type ShardingFunc func(skVal any) (string, string)
 
 type Field struct {
 	GoName string

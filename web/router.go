@@ -7,7 +7,7 @@ import (
 
 // router 用来支持对路由树的操作
 type router struct {
-	// Beego Gin HTTP method也对应一棵树
+	// Beego Gin HTTP method也对应一棵树，例如GET => *node
 	trees map[string]*node
 }
 
@@ -23,7 +23,7 @@ type node struct {
 	// 路径参数匹配
 	paramChild *node
 	// 通配符*表达的节点，任意匹配
-	startChild *node
+	starChild *node
 }
 
 type matchInfo struct {
@@ -126,7 +126,7 @@ func (r *router) findRoute(method string, path string) (*matchInfo, bool) {
 // childOrCreate 根据seg找子节点，当子节点不存在时，进行创建
 func (n *node) childOrCreate(seg string) *node {
 	if seg[0] == ':' {
-		if n.startChild != nil {
+		if n.starChild != nil {
 			panic("web: 不允许同时注册路径参数和通配符，已有通配符匹配")
 		}
 		n.paramChild = &node{
@@ -138,10 +138,10 @@ func (n *node) childOrCreate(seg string) *node {
 		if n.paramChild != nil {
 			panic("web: 不允许同时注册路径参数和通配符，已有路径参数")
 		}
-		n.startChild = &node{
+		n.starChild = &node{
 			path: seg,
 		}
-		return n.startChild
+		return n.starChild
 	}
 	// 1、children为nil，创建子节点
 	if n.children == nil {
@@ -165,14 +165,14 @@ func (n *node) childOf(path string) (*node, bool, bool) {
 		if n.paramChild != nil {
 			return n.paramChild, true, true
 		}
-		return n.startChild, false, n.startChild != nil
+		return n.starChild, false, n.starChild != nil
 	}
 	res, ok := n.children[path]
 	if !ok {
 		if n.paramChild != nil {
 			return n.paramChild, true, true
 		}
-		return n.startChild, false, n.startChild != nil
+		return n.starChild, false, n.starChild != nil
 	}
 	return res, false, ok
 }

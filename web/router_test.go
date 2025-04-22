@@ -108,7 +108,7 @@ func TestRouter_addRouter(t *testing.T) {
 								handler: mockHandler,
 							},
 						},
-						startChild: &node{
+						starChild: &node{
 							path:    "*",
 							handler: mockHandler,
 						},
@@ -154,8 +154,8 @@ func (n *node) equal(y *node) (string, bool) {
 	if len(n.children) != len(y.children) {
 		return fmt.Sprintf("子节点数量不相等"), false
 	}
-	if n.startChild != nil {
-		msg, ok := n.startChild.equal(y.startChild)
+	if n.starChild != nil {
+		msg, ok := n.starChild.equal(y.starChild)
 		if !ok {
 			return msg, ok
 		}

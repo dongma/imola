@@ -20,6 +20,7 @@ type Server interface {
 	AddRouteVarFuncs(method string, path string, handleFuncs ...HandleFunc)
 }
 
+// 确保HttpServer肯定实现了Server接口
 var _ Server = &HTTPServer{}
 
 type HTTPServerOption func(server *HTTPServer)

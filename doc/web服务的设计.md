@@ -49,7 +49,7 @@ func (h *HTTPServer) AddRoute(method string, path string, handleFunc HandleFunc)
 ```
 参考`gin`、`echo`的路由设计，路由树归根结底就是一棵多叉树（`gin`中每种`http`方法一棵树，例如`GET`、`POST`请求分别一棵树）,节点维持主自己的子节点。`route`核心设计如下：
 <p>
-    <img align="center" width="575px" src="imgs/web_router_tree.jpg">
+    <img align="center" width="625px" src="imgs/web_router_tree.jpg">
 </p>
 
 ```go
@@ -113,7 +113,7 @@ func (c *Context) RespJSON(status int, val any) error {
 ```
 `AOP`也即面向切面编程，可以类比于`Java`中的`Filter`，如果有多个`Filter`的话，则可以构成一个责任链。在这一块，基于Go语言，学到了一种`Option`的设计模式，如下方代码。
 <p>
-    <img align="center" width="575px" src="imgs/web_middlewares.jpg.jpg">
+    <img align="center" width="625px" src="imgs/web_middlewares.jpg">
 </p>
 
 ```go
@@ -136,7 +136,7 @@ func ServerWithMiddleware(mdls ...Middleware) HTTPServerOption {
     }
 }
 
-// 实际使用示例，为HTTPServer添加access_log的中间件，代码无侵入式lder := MiddlewareBuilder{}
+// 实际使用示例，为HTTPServer添加access_log的中间件，代码无侵入式
 mdls := builder.LogFunc(func(log string) {
     fmt.Println(log)
 }).Build()

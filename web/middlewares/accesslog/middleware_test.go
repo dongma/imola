@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"imola/web"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestMiddlewareBuilder_Build(t *testing.T) {
 	builder := MiddlewareBuilder{}
-	mdls := builder.LogFunc(func(log string) {
+	mdl1 := builder.LogFunc(func(log string) {
 		fmt.Println(log)
 	}).Build()
-	server := web.NewHTTPServer(web.ServerWithMiddleware(mdls))
+	mdl2 := builder.LogFunc(func(log string) {
+		fmt.Println("second mdl: " + log)
+	}).Build()
+	server := web.NewHTTPServer(web.ServerWithMiddleware(mdl1, mdl2))
 	server.POST("/a/b/*", func(ctx *web.Context) {
 		fmt.Println("hello, it's me")
 	})
@@ -24,5 +28,5 @@ func TestMiddlewareBuilder_Build(t *testing.T) {
 	//=== RUN   TestMiddlewareBuilder_Build
 	//hello, it's me
 	//{"host":"localhost","route":"a/b/*","http_method":"POST","path":"/a/b/c"}
-	server.ServeHTTP(nil, req)
+	server.ServeHTTP(httptest.NewRecorder(), req)
 }

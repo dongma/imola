@@ -142,3 +142,34 @@ mdls := builder.LogFunc(func(log string) {
 }).Build()
 server := web.NewHTTPServer(web.ServerWithMiddleware(mdls))
 ```
+在`server.go`中`middleware`链的构建，`h.serve`是责任链最终执行的函数，这块有点不太好理解，在`Goland`上`debug`了一下，构建成功的`chain`如下所示，逐步`debug`来看：
+- 第一步将`h.serve`这个函数赋值给了`root`，然后遍利`mids`数组时，`root`（也即`h.serve`）作为参数`next`传递给了`Middleware`类型的func
+- 此时，`root`指向了`middleware`，并且middleware.next指向的是`h.serve`这个函数；
+- 下一个循环中，之前`root`指向的`middleware`又作为`next`参数 传递给了新的`middleware`对象，这样通过`next`就串起来了责任链。
+<p>
+    <img align="center" width="625px" src="imgs/web_chain_debug.jpg">
+</p>
+
+```go
+type Middleware func(next HandleFunc) HandleFunc
+type HandleFunc func(ctx *Context)
+
+root := h.serve
+// 然后这里就是调用最后一个不断向前回溯的组装链条，从后往前构造一个链条
+for i := len(h.mids) - 1; i >= 0; i-- {
+    root = h.mids[i](root)
+}
+
+// serve 查找路由，执行实际的业务逻辑
+func (h *HTTPServer) serve(ctx *Context) {
+    info, ok := h.findRoute(ctx.Req.Method, ctx.Req.URL.Path)
+    if !ok || info.n.handler == nil {
+        ctx.RespStatusCode = 404
+        ctx.RespData = []byte("not found")
+        return
+    }
+    ctx.PathParams = info.pathParams
+    ctx.MatchedRoute = info.n.route
+    info.n.handler(ctx)
+}
+```

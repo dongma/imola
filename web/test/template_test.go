@@ -87,6 +87,26 @@ func TestLoginPage(t *testing.T) {
 	h.Start(":8081")
 }
 
+func TestIfElse(t *testing.T) {
+	tpl := template.New("hello-world")
+	tpl, err := tpl.Parse(`
+		{{- if and (gt .Age 0) (le .Age 6)}}
+		我是儿童: (0, 6]
+		{{ else if and (gt .Age 6) (le .Age 18) }}
+		我是少年: (6, 18]
+		{{ else }}我是成人: >18{{end -}}
+	`)
+	require.NoError(t, err)
+	buffer := &bytes.Buffer{}
+	err = tpl.Execute(buffer, User{Age: 19})
+	require.NoError(t, err)
+	assert.Equal(t, `我是成人: >18`, buffer.String())
+}
+
+type User struct {
+	Age uint32
+}
+
 type FuncCall struct {
 	Slice []string
 }

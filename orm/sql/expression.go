@@ -1,5 +1,10 @@
 package sql
 
+// Expression 是一个标记接口，代表一个表达式
+type Expression interface {
+	Expr()
+}
+
 // RawExpr 代表原生表达式
 type RawExpr struct {
 	Raw  string

@@ -24,11 +24,6 @@ type Predicate struct {
 
 func (Predicate) Expr() {}
 
-// Expression 是一个标记接口，代表一个表达式
-type Expression interface {
-	Expr()
-}
-
 type Value struct {
 	Val any
 }

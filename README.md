@@ -28,7 +28,7 @@ func main() {
 ```
 
 ### 操作数据库
-实现自定义的`orm`框架，根据`model`对象生成的查询语句支持`mysql`、`sqlite`以及可扩展`postgre`，同时也支持`native sql`查询，并映射结果集到`model`对象，详细设计请阅读 [web服务的设计](doc/orm服务的设计.md)。
+实现自定义的`orm`框架，根据`model`对象生成的查询语句支持`mysql`、`sqlite`以及可扩展`postgre`，同时也支持`native sql`查询，并映射结果集到`model`对象，详细设计请阅读 [orm框架的设计](doc/orm服务的设计.md)。
 ```go
 import (
     "context"

@@ -33,6 +33,7 @@ func (r reflectValue) SetColumn(rows *sql.Rows) error {
 	vals := make([]any, 0, len(cols))
 	valElems := make([]reflect.Value, 0, len(cols))
 	for _, col := range cols {
+		// first_name->FirstName，拿到表字段对应go struct字段
 		field, ok := r.model.ColumnMap[col]
 		if !ok {
 			return errs.NewErrUnknownColumn(col)
@@ -40,11 +41,11 @@ func (r reflectValue) SetColumn(rows *sql.Rows) error {
 		// 用反射创建一个实例 (原本类型的指针类型), 例如: fd.type = int, 那么val是*int
 		val := reflect.New(field.Typ)
 		vals = append(vals, val.Interface())
-		// 此处要调用val.Elem()，因为fd.type = int, 那么val是*int
+		// 因为val是*int，那么val.Elem()的结果就是int
 		valElems = append(valElems, val.Elem())
 	}
 
-	// select id, first_name, age, last_name
+	// select id, first_name, age, last_name，根据Scan的用法，其参数都是指针类型。 Scan之后，就会将sql结果写入
 	err = rows.Scan(vals...)
 	if err != nil {
 		return err

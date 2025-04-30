@@ -16,7 +16,8 @@ type Selector[T any] struct {
 	table   TableReference
 	where   []sql.Predicate
 	columns []Selectable
-	sess    Session
+	// 绑定session会话信息
+	sess Session
 }
 
 func NewSelector[T any](sess Session) *Selector[T] {

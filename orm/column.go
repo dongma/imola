@@ -19,6 +19,7 @@ func C(name string) Column {
 	}
 }
 
+// As 场景select field_a as a
 func (c Column) As(alias string) Column {
 	return Column{
 		Name:  c.Name,

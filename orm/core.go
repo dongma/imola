@@ -19,6 +19,7 @@ func get[T any](ctx context.Context, sess Session, c core, qc *QueryContext) *Qu
 	var root Handler = func(ctx context.Context, qc *QueryContext) *QueryResult {
 		return getHandler[T](ctx, sess, c, qc)
 	}
+	// 将ORM的中间件串起来, root指向的Handler最后执行
 	for i := len(c.mdls) - 1; i >= 0; i-- {
 		root = c.mdls[i](root)
 	}

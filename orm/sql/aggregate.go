@@ -10,6 +10,7 @@ type Aggregate struct {
 func (a Aggregate) Selectable() {
 }
 
+// As 场景select field_a as a
 func (a Aggregate) As(alias string) Aggregate {
 	return Aggregate{
 		Fn:    a.Fn,

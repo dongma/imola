@@ -11,12 +11,14 @@ var (
 	DialectPostgreSQL Dialect = postgreDialect{}
 )
 
+// Dialect 方言抽象
 type Dialect interface {
-	// quoter 返回一个引号，引用列名，表的引号
+	// Quoter 返回一个引号，引用列名，表的引号
 	Quoter() byte
 	BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error
 }
 
+// standardSQL 实现标准sql方案，其它方言继承standardSQL
 type standardSQL struct {
 }
 
@@ -28,6 +30,7 @@ func (s standardSQL) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error 
 	panic("implement me")
 }
 
+// mysqlDialect mysql onDuplicateKey的实现
 type mysqlDialect struct {
 	standardSQL
 }
@@ -36,6 +39,7 @@ func (s mysqlDialect) Quoter() byte {
 	return '`'
 }
 
+// BuildOnDuplicateKey mysql数据库对DuplicateKey的支持
 func (s mysqlDialect) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
 	b.sb.WriteString(" ON DUPLICATE KEY UPDATE ")
 	for idx, assign := range odk.assigns {
@@ -75,6 +79,7 @@ func (s sqliteDialect) Quoter() byte {
 	return '`'
 }
 
+// BuildOnDuplicateKey sqlite数据库对DuplicateKey的支持
 func (s sqliteDialect) BuildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
 	b.sb.WriteString(" ON CONFLICT(")
 	for i, col := range odk.conflictColumns {

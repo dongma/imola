@@ -10,6 +10,7 @@ var (
 	_ Session = &DB{}
 )
 
+// Session 代表一个DB和Tx的公共抽象，在ORM语境下，一般代表一个上下文，也可以理解为一种分组机制（在这个组内共享一些配置）
 type Session interface {
 	getCore() core
 	queryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)

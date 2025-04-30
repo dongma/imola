@@ -22,4 +22,5 @@ type QueryResult struct {
 
 type Handler func(ctx context.Context, qc *QueryContext) *QueryResult
 
+// Middleware 实现AOP，将中间件一个一个串起来
 type Middleware func(next Handler) Handler

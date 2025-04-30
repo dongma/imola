@@ -8,12 +8,14 @@ import (
 	sql2 "imola/orm/sql"
 )
 
+// OnDuplicateKeyBuilder 用于构造OnDuplicateKey
 type OnDuplicateKeyBuilder[T any] struct {
 	i               *Inserter[T]
 	conflictColumns []string
 }
 
 type OnDuplicateKey struct {
+	// 维持conflict的字段列表
 	assigns         []Assignable
 	conflictColumns []string
 }
@@ -31,10 +33,12 @@ func (o *OnDuplicateKeyBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
 	return o.i
 }
 
+// Assignable 标记接口，实现改接口意味着可以用于赋值语句，用在update和upsert中
 type Assignable interface {
 	Assign()
 }
 
+// Inserter 定义insert语句的builder
 type Inserter[T any] struct {
 	builder
 	sess           Session
@@ -43,6 +47,7 @@ type Inserter[T any] struct {
 	onDuplicateKey *OnDuplicateKey
 }
 
+// NewInserter 创建insert，并初始化好其它属性
 func NewInserter[T any](sess Session) *Inserter[T] {
 	core := sess.getCore()
 	return &Inserter[T]{

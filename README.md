@@ -58,3 +58,29 @@ func main() {
     err = row.Scan(&tm.Id, &tm.FirstName, &tm.Age, &tm.LastName)
 }
 ```
+### `Cache`
+业务但凡对性能有点要求，几乎都会考虑使用缓存。缓存大体上分成两类：本地缓存和分布式缓存，如`Redis`、`memecache`,详细设计请阅读 [cache服务的设计](doc/cache服务的设计.md)。
+```go
+import (
+    "context"
+    "github.com/redis/go-redis/v9"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+    "imola/cache"
+    "testing"
+    "time"
+)
+func main() {
+    rdb := redis.NewClient(&redis.Options{
+        Addr: "127.0.0.1:6379",
+    })
+    rcache := cache.NewRedisCache(rdb)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+    defer cancel()
+    err := rcache.Set(ctx, "key1", "value1", time.Minute)
+    require.NoError(t, err)
+    val, err := rcache.Get(ctx, "key1")
+    require.NoError(t, err)
+    assert.Equal(t, "value1", val)
+}
+```

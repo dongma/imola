@@ -39,26 +39,27 @@ func (c *Client) SingleFlightLock(ctx context.Context, key string,
 	timeout time.Duration,
 	retry RetryStrategy) (*Lock, error) {
 	for {
-		flag := false
+		flag := false // 标记是不是自己拿到了锁
 		resCh := c.g.DoChan(key, func() (interface{}, error) {
 			flag = true
 			return c.Lock(ctx, key, expiration, timeout, retry)
 		})
 		select {
 		case res := <-resCh:
-			if flag {
+			if flag { // 确实是自己拿到了锁
 				c.g.Forget(key)
 				if res.Err != nil {
 					return nil, res.Err
 				}
 				return res.Val.(*Lock), nil
 			}
-		case <-ctx.Done():
+		case <-ctx.Done(): // 监听超时timeout
 			return nil, ctx.Err()
 		}
 	}
 }
 
+// Lock 使用lua脚本加锁，lua/lock.lua
 func (c *Client) Lock(ctx context.Context, key string,
 	expiration time.Duration,
 	timeout time.Duration,
@@ -66,10 +67,11 @@ func (c *Client) Lock(ctx context.Context, key string,
 	var timer *time.Timer
 	val := uuid.New().String()
 	for {
-		// 在这里重试
 		lctx, cancel := context.WithTimeout(ctx, timeout)
+		// 尝试获得锁
 		res, err := c.client.Eval(lctx, LuaLock, []string{key}, val, expiration.Seconds()).Result()
 		cancel()
+		// 非超时错误，遇到了不可挽回的错误
 		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 			return nil, err
 		}
@@ -101,6 +103,7 @@ func (c *Client) Lock(ctx context.Context, key string,
 	}
 }
 
+// TryLock 使用client.SetNX方法加锁
 func (c *Client) TryLock(ctx context.Context, key string,
 	expiration time.Duration) (*Lock, error) {
 	val := uuid.New().String()

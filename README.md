@@ -84,3 +84,35 @@ func main() {
     assert.Equal(t, "value1", val)
 }
 ```
+### 微服务
+微服务框架是服务于微服务架构的，微服务架构是指整个系统由多个组件组成，每一个组件都独立管理，组件之间通过网络来通信，微服务框架就是要解决这种架构下，组件之间的发现、通信、容错等问题，详细设计请阅读 [微服务框架设计](doc/微服务框架设计.md)。
+```go
+// 使用 GROUP_ROUND_ROBIN 的策略，实现服务负载均衡，在context中设置要请求的group为"g-A"
+func TestClient(t *testing.T) {
+	etcdClient,_ := clientv3.New(clientv3.Config{
+		Endpoints: []string{"localhost:2379"},
+	})
+	r, _ := etcd.NewRegistry(etcdClient)
+
+	client, err := micro.NewClient(micro.ClientInsecure(),
+		micro.ClientWithRegistry(r, time.Second*3),
+		micro.ClientWithPickedBuilder("GROUP_ROUND_ROBIN", &round_robin.Builder{
+			Filter: loadbalance.GroupFilterBuilder{}.Build(),
+		}))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	require.NoError(t, err)
+
+	ctx = context.WithValue(ctx, "group", "g-A")
+	cc, err := client.Dial(ctx, "user-service")
+	require.NoError(t, err)
+
+	uc := gen.NewUserServiceClient(cc)
+	for i := 0; i < 10; i++ {
+		// 后端rpc服务输出的group为“g-A”，代表client的请求打到了“g-A”的服务上
+		resp, err := uc.GetById(ctx, &gen.GetByIdReq{Id: 13})
+		require.NoError(t, err)
+		t.Log(resp)
+	}
+}
+```

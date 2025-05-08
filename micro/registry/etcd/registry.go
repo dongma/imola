@@ -67,6 +67,7 @@ func (r *Registry) Subscribe(serviceName string) (<-chan registry.Event, error) 
 	ctx = clientv3.WithRequireLeader(ctx)
 	watchResp := r.client.Watch(ctx, r.serviceKey(serviceName), clientv3.WithPrefix())
 	res := make(chan registry.Event)
+	// 监听变更
 	go func() {
 		for {
 			select {

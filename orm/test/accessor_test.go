@@ -1,9 +1,9 @@
 package test
 
 import (
+	"github.com/dongma/imola/orm/unsafe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/orm/unsafe"
 	"testing"
 )
 

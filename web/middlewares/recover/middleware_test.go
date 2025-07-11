@@ -2,7 +2,7 @@ package recover
 
 import (
 	"fmt"
-	"imola/web"
+	"github.com/dongma/imola/web"
 	"testing"
 )
 

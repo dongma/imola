@@ -2,8 +2,8 @@ package test
 
 import (
 	"errors"
+	reflect2 "github.com/dongma/imola/orm/reflect"
 	"github.com/stretchr/testify/assert"
-	reflect2 "imola/orm/reflect"
 	"reflect"
 	"testing"
 )

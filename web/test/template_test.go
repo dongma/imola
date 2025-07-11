@@ -3,10 +3,10 @@ package test
 import (
 	"bytes"
 	"fmt"
+	"github.com/dongma/imola/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"html/template"
-	"imola/web"
 	"log"
 	"testing"
 )

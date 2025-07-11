@@ -1,12 +1,14 @@
+//go:build e2e
+
 package test
 
 import (
 	"context"
 	"fmt"
+	"github.com/dongma/imola/cache/distlock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/cache/distlock"
 	"testing"
 	"time"
 )

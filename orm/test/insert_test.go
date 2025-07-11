@@ -6,11 +6,11 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/dongma/imola/orm"
+	"github.com/dongma/imola/orm/internal/errs"
+	sql2 "github.com/dongma/imola/orm/sql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/orm"
-	"imola/orm/internal/errs"
-	sql2 "imola/orm/sql"
 	"testing"
 )
 

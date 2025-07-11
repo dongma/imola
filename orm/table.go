@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"imola/orm/sql"
+	"github.com/dongma/imola/orm/sql"
 )
 
 type TableReference interface {

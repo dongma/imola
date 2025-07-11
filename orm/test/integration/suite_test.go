@@ -1,9 +1,9 @@
 package integration
 
 import (
+	"github.com/dongma/imola/orm"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"imola/orm"
 )
 
 type Suite struct {

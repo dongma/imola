@@ -2,8 +2,8 @@ package prometheus
 
 import (
 	"context"
+	"github.com/dongma/imola/orm"
 	"github.com/prometheus/client_golang/prometheus"
-	"imola/orm"
 	"time"
 )
 

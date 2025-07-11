@@ -3,9 +3,9 @@ package orm
 import (
 	"context"
 	"database/sql"
-	"imola/orm/internal/errs"
-	"imola/orm/model"
-	sql2 "imola/orm/sql"
+	"github.com/dongma/imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/model"
+	sql2 "github.com/dongma/imola/orm/sql"
 )
 
 // OnDuplicateKeyBuilder 用于构造OnDuplicateKey

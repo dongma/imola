@@ -3,14 +3,14 @@ package round_robin
 import (
 	"context"
 	"fmt"
+	"github.com/dongma/imola/micro"
+	"github.com/dongma/imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/registry/etcd"
 	"github.com/stretchr/testify/require"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
-	"imola/micro"
-	"imola/micro/proto/gen"
-	"imola/micro/registry/etcd"
 	"testing"
 	"time"
 )

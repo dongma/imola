@@ -1,5 +1,5 @@
 package sql
 
-import "imola/orm/internal/errs"
+import "github.com/dongma/imola/orm/internal/errs"
 
 var ErrorNoRows = errs.ErrNoRows

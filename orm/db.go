@@ -3,9 +3,9 @@ package orm
 import (
 	"context"
 	"database/sql"
-	"imola/orm/internal/errs"
-	"imola/orm/internal/valuer"
-	"imola/orm/model"
+	"github.com/dongma/imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/internal/valuer"
+	"github.com/dongma/imola/orm/model"
 )
 
 type DBOption func(db *DB)

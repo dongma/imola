@@ -3,11 +3,11 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/dongma/imola/cache"
+	"github.com/dongma/imola/cache/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-	"imola/cache"
-	"imola/cache/mocks"
 	"testing"
 	"time"
 )

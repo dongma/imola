@@ -2,11 +2,11 @@ package test
 
 import (
 	"context"
+	"github.com/dongma/imola/cache/distlock"
+	"github.com/dongma/imola/cache/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-	"imola/cache/distlock"
-	"imola/cache/mocks"
 	"testing"
 	"time"
 )

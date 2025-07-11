@@ -2,7 +2,7 @@ package orm
 
 import (
 	"context"
-	"imola/orm/sql"
+	"github.com/dongma/imola/orm/sql"
 )
 
 // Querier 用于Select语句

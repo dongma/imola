@@ -1,11 +1,11 @@
 package opentelemetry
 
 import (
+	"github.com/dongma/imola/web"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
-	"imola/web"
 )
 
 const instrumentationName = "/imola/web/middlewares/opentelemetry"

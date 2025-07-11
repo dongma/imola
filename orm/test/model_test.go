@@ -2,10 +2,10 @@ package test
 
 import (
 	"database/sql"
+	"github.com/dongma/imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/orm/internal/errs"
-	"imola/orm/model"
 	"reflect"
 	"testing"
 )

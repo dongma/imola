@@ -3,10 +3,10 @@ package opentelemetry
 import (
 	"context"
 	"fmt"
+	"github.com/dongma/imola/orm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"imola/orm"
 )
 
 const instrumentationName = "/imola/orm/middlewares/opentelemetry"

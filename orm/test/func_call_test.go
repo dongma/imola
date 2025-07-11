@@ -1,9 +1,9 @@
 package test
 
 import (
+	reflect2 "github.com/dongma/imola/orm/reflect"
+	"github.com/dongma/imola/orm/reflect/types"
 	"github.com/stretchr/testify/assert"
-	reflect2 "imola/orm/reflect"
-	"imola/orm/reflect/types"
 	"reflect"
 	"testing"
 )

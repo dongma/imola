@@ -2,8 +2,8 @@ package valuer
 
 import (
 	"database/sql"
-	"imola/orm/internal/errs"
-	"imola/orm/model"
+	"github.com/dongma/imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/model"
 	"reflect"
 )
 

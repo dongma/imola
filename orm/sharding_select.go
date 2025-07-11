@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/dongma/imola/orm/internal/errs"
+	isql "github.com/dongma/imola/orm/sql"
 	"golang.org/x/sync/errgroup"
-	"imola/orm/internal/errs"
-	isql "imola/orm/sql"
 	"strings"
 )
 

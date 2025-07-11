@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"context"
-	"imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/proto/gen"
 	"log"
 	"testing"
 	"time"

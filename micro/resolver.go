@@ -2,9 +2,9 @@ package micro
 
 import (
 	"context"
+	"github.com/dongma/imola/micro/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
-	"imola/micro/registry"
 	"time"
 )
 

@@ -2,8 +2,8 @@ package micro
 
 import (
 	"context"
+	"github.com/dongma/imola/micro/registry"
 	"google.golang.org/grpc"
-	"imola/micro/registry"
 	"net"
 	"time"
 )

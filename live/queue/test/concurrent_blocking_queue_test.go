@@ -2,7 +2,7 @@ package test
 
 import (
 	"context"
-	"imola/live/queue"
+	"github.com/dongma/imola/live/queue"
 	"math/rand"
 	"sync"
 	"testing"

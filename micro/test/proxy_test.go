@@ -3,11 +3,11 @@ package test
 import (
 	"context"
 	"errors"
+	"github.com/dongma/imola/micro/rpc"
+	"github.com/dongma/imola/micro/rpc/compresser"
+	"github.com/dongma/imola/micro/rpc/serialize/json"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"imola/micro/rpc"
-	"imola/micro/rpc/compresser"
-	"imola/micro/rpc/serialize/json"
 	"testing"
 )
 

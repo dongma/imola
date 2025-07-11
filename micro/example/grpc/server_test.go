@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/dongma/imola/micro"
+	"github.com/dongma/imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/registry/etcd"
 	"github.com/stretchr/testify/require"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sync/errgroup"
-	"imola/micro"
-	"imola/micro/proto/gen"
-	"imola/micro/registry/etcd"
 	"testing"
 )
 

@@ -3,7 +3,7 @@ package querylog
 import (
 	"context"
 	"errors"
-	"imola/orm"
+	"github.com/dongma/imola/orm"
 	"strings"
 )
 

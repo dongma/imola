@@ -1,7 +1,7 @@
 package session
 
 import (
-	"imola/web"
+	"github.com/dongma/imola/web"
 )
 
 // Manager 用户操作的友好封装

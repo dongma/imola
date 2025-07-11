@@ -2,8 +2,8 @@ package test
 
 import (
 	"bytes"
+	"github.com/dongma/imola/web"
 	"html/template"
-	"imola/web"
 	"mime/multipart"
 	"net/http"
 	"path"

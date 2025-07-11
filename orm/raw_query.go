@@ -3,7 +3,7 @@ package orm
 import (
 	"context"
 	"database/sql"
-	sql2 "imola/orm/sql"
+	sql2 "github.com/dongma/imola/orm/sql"
 )
 
 type RawQuerier[T any] struct {

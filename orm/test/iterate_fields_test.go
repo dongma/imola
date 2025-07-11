@@ -1,7 +1,7 @@
 package test
 
 import (
-	"imola/orm/unsafe"
+	"github.com/dongma/imola/orm/unsafe"
 	"testing"
 )
 

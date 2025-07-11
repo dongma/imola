@@ -1,7 +1,7 @@
 package model
 
 import (
-	"imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/internal/errs"
 	"reflect"
 	"strings"
 	"sync"

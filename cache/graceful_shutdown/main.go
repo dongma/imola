@@ -2,7 +2,7 @@ package graceful_shutdown
 
 import (
 	"context"
-	"imola/cache/graceful_shutdown/service"
+	"github.com/dongma/imola/cache/graceful_shutdown/service"
 	"log"
 	"net/http"
 	"time"

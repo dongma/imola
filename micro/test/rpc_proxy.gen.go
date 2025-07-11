@@ -6,7 +6,7 @@ package test
 
 import (
 	context "context"
-	protocol "imola/micro/rpc/protocol"
+	protocol "github.com/dongma/imola/micro/rpc/protocol"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

@@ -1,8 +1,8 @@
 package test
 
 import (
+	"github.com/dongma/imola/live/queue"
 	"github.com/stretchr/testify/assert"
-	"imola/live/queue"
 	"testing"
 )
 

@@ -2,7 +2,7 @@ package querylog
 
 import (
 	"context"
-	"imola/orm"
+	"github.com/dongma/imola/orm"
 	"log"
 	"time"
 )

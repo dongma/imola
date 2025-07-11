@@ -2,7 +2,7 @@ package accesslog
 
 import (
 	"encoding/json"
-	"imola/web"
+	"github.com/dongma/imola/web"
 )
 
 type MiddlewareBuilder struct {

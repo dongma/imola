@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"context"
-	"imola/micro/rpc/protocol"
+	"github.com/dongma/imola/micro/rpc/protocol"
 )
 
 type Service interface {

@@ -2,7 +2,7 @@ package valuer
 
 import (
 	"database/sql"
-	"imola/orm/model"
+	"github.com/dongma/imola/orm/model"
 )
 
 type Value interface {

@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"context"
+	"github.com/dongma/imola/micro"
+	"github.com/dongma/imola/micro/loadbalance"
+	"github.com/dongma/imola/micro/loadbalance/round_robin"
+	"github.com/dongma/imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/registry/etcd"
 	"github.com/stretchr/testify/require"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"imola/micro"
-	"imola/micro/loadbalance"
-	"imola/micro/loadbalance/round_robin"
-	"imola/micro/proto/gen"
-	"imola/micro/registry/etcd"
 	"testing"
 	"time"
 )

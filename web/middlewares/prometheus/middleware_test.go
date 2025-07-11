@@ -2,8 +2,8 @@
 package prometheus
 
 import (
+	"github.com/dongma/imola/web"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"imola/web"
 	"math/rand/v2"
 	"net/http"
 	"testing"

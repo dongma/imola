@@ -1,8 +1,8 @@
 package prometheus
 
 import (
+	"github.com/dongma/imola/web"
 	"github.com/prometheus/client_golang/prometheus"
-	"imola/web"
 	"strconv"
 	"time"
 )

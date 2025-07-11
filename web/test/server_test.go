@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"imola/web"
+	"github.com/dongma/imola/web"
 	"net/http"
 	"testing"
 )

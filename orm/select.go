@@ -2,8 +2,8 @@ package orm
 
 import (
 	"context"
-	"imola/orm/internal/errs"
-	"imola/orm/sql"
+	"github.com/dongma/imola/orm/internal/errs"
+	"github.com/dongma/imola/orm/sql"
 )
 
 // Selectable 是一个标记接口，代表查找的列或聚合函数等，例如：select xx 这部分

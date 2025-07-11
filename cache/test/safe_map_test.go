@@ -1,7 +1,7 @@
 package test
 
 import (
-	"imola/cache/concurrency/sync"
+	"github.com/dongma/imola/cache/concurrency/sync"
 	"testing"
 	"time"
 )

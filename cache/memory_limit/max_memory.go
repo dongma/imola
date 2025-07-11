@@ -2,8 +2,8 @@ package memory_limit
 
 import (
 	"context"
+	"github.com/dongma/imola/cache"
 	"github.com/gotomicro/ekit/list"
-	"imola/cache"
 	"sync"
 	"time"
 )

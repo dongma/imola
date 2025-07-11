@@ -3,11 +3,11 @@ package test
 import (
 	"context"
 	"errors"
+	"github.com/dongma/imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/rate_limit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"imola/micro/proto/gen"
-	"imola/micro/rate_limit"
 	"testing"
 	"time"
 )

@@ -1,10 +1,10 @@
 package round_robin
 
 import (
+	"github.com/dongma/imola/micro/loadbalance"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/resolver"
-	"imola/micro/loadbalance"
 	"sync/atomic"
 )
 

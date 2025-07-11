@@ -2,7 +2,7 @@ package accesslog
 
 import (
 	"fmt"
-	"imola/web"
+	"github.com/dongma/imola/web"
 	"net/http"
 	"net/http/httptest"
 	"testing"

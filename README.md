@@ -8,7 +8,7 @@
 对比现有的`Beego`、`Gin`和`Echo`，对于一个`web`框架来说，至少要提供三个抽象：`Server`-代表服务器的抽象，`Context`-代表上下文的抽象以及路由树，详细设计请阅读 [web服务的设计](doc/web服务的设计.md)。
 ```go
 import (
-    "imola/web"
+    "github.com/dongma/imola/web"
 )
 
 func main() {
@@ -66,7 +66,7 @@ import (
     "github.com/redis/go-redis/v9"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
-    "imola/cache"
+    "github.com/dongma/imola/cache"
     "testing"
     "time"
 )

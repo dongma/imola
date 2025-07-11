@@ -1,11 +1,11 @@
 package test
 
 import (
+	"github.com/dongma/imola/web"
+	"github.com/dongma/imola/web/session"
+	"github.com/dongma/imola/web/session/cookie"
+	"github.com/dongma/imola/web/session/memory"
 	"github.com/google/uuid"
-	"imola/web"
-	"imola/web/session"
-	"imola/web/session/cookie"
-	"imola/web/session/memory"
 	"net/http"
 	"testing"
 	"time"

@@ -1,4 +1,4 @@
-module imola
+module github.com/dongma/imola
 
 go 1.23.0
 

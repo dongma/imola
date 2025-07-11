@@ -1,7 +1,7 @@
 package errhdl
 
 import (
-	"imola/web"
+	"github.com/dongma/imola/web"
 )
 
 type MiddlewareBuilder struct {

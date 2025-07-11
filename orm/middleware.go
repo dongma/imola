@@ -2,7 +2,7 @@ package orm
 
 import (
 	"context"
-	"imola/orm/model"
+	"github.com/dongma/imola/orm/model"
 )
 
 type QueryContext struct {

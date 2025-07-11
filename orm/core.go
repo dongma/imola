@@ -2,9 +2,9 @@ package orm
 
 import (
 	"context"
-	"imola/orm/internal/valuer"
-	"imola/orm/model"
-	"imola/orm/sql"
+	"github.com/dongma/imola/orm/internal/valuer"
+	"github.com/dongma/imola/orm/model"
+	"github.com/dongma/imola/orm/sql"
 )
 
 type core struct {

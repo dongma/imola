@@ -3,11 +3,11 @@ package test
 import (
 	"context"
 	"errors"
+	"github.com/dongma/imola/micro/proto/gen"
+	"github.com/dongma/imola/micro/rpc"
+	"github.com/dongma/imola/micro/rpc/serialize/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"imola/micro/proto/gen"
-	"imola/micro/rpc"
-	"imola/micro/rpc/serialize/proto"
 	"testing"
 	"time"
 )

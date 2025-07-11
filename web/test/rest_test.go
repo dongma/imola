@@ -1,7 +1,7 @@
 package test
 
 import (
-	"imola/web"
+	"github.com/dongma/imola/web"
 	"testing"
 )
 

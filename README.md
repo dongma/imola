@@ -1,6 +1,5 @@
-<img align="right" src="doc/imgs/424_cartoons-gophers.png" alt="imola logo" style="width: 130px; margin-top: 70px; margin-right: 40px;"/>
-
 # imola
+<img align="right" width="130px" src="doc/imgs/424_cartoons-gophers.png" alt="imola logo" hspace="40">
 
 [![release](https://img.shields.io/badge/release-v1.0.0-blue?style=flat-square)](https://github.com/dongma/imola/releases)
 [![Go Reference](https://img.shields.io/badge/Go-Reference-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/dongma/imola)
@@ -11,8 +10,7 @@
 
 《`go`实战训练营》学习过程中写的代码，主要包括：`server`路由注册、`orm`中SQL生成与事务操作、分布式缓存和`go`微服务这`4`部分，具体功能实现有：手工写`web`路由树，自己实现`orm`生成复杂查询的`sql`，此外，使用`grpc`和`etcd`结合实现服务注册与发现，收获比较多，对后续学习`go`相应框架如`gin`、`gorm`和`gozero`等时有指导性意义。
 
-<br clear="right"/>
-<hr style="margin: 6px 0;"/>
+<hr style="margin: 0;"/>
 
 ## `web`路由注册
 对比现有的`Beego`、`Gin`和`Echo`，对于一个`web`框架来说，至少要提供三个抽象：`Server`-代表服务器的抽象，`Context`-代表上下文的抽象以及路由树，详细设计请阅读 [web服务的设计](doc/web服务的设计.md)。

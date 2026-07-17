@@ -1,10 +1,20 @@
+<img align="right" src="doc/imgs/424_cartoons-gophers.png" alt="imola logo" style="width: 130px; margin-top: 70px; margin-right: 40px;"/>
+
 # imola
-<p align="center">
-    <img align="center" width="138px" src="doc/imgs/424_cartoons-gophers.png">
-</p>
+
+[![release](https://img.shields.io/badge/release-v1.0.0-blue?style=flat-square)](https://github.com/dongma/imola/releases)
+[![Go Reference](https://img.shields.io/badge/Go-Reference-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/dongma/imola)
+[![awesome](https://img.shields.io/badge/awesome-blueviolet?style=flat-square)](https://github.com/avelino/awesome-go)
+[![License](https://img.shields.io/badge/License-Apache%202.0-yellow?style=flat-square)](https://github.com/dongma/imola/blob/master/LICENSE)
+
+*从零实现 · 服务端四大件：Web 路由注册 / ORM / 分布式缓存 / gRPC 微服务*
 
 《`go`实战训练营》学习过程中写的代码，主要包括：`server`路由注册、`orm`中SQL生成与事务操作、分布式缓存和`go`微服务这`4`部分，具体功能实现有：手工写`web`路由树，自己实现`orm`生成复杂查询的`sql`，此外，使用`grpc`和`etcd`结合实现服务注册与发现，收获比较多，对后续学习`go`相应框架如`gin`、`gorm`和`gozero`等时有指导性意义。
-### `web`路由注册
+
+<br clear="right"/>
+<hr style="margin: 6px 0;"/>
+
+## `web`路由注册
 对比现有的`Beego`、`Gin`和`Echo`，对于一个`web`框架来说，至少要提供三个抽象：`Server`-代表服务器的抽象，`Context`-代表上下文的抽象以及路由树，详细设计请阅读 [web服务的设计](doc/web服务的设计.md)。
 ```go
 import (
@@ -27,7 +37,7 @@ func main() {
 {"name":"Tom"}% 
 ```
 
-### 操作数据库
+## 操作数据库
 实现自定义的`orm`框架，根据`model`对象生成的查询语句支持`mysql`、`sqlite`以及可扩展`postgre`，同时也支持`native sql`查询，并映射结果集到`model`对象，详细设计请阅读 [orm框架的设计](doc/orm服务的设计.md)。
 ```go
 import (
@@ -58,7 +68,7 @@ func main() {
     err = row.Scan(&tm.Id, &tm.FirstName, &tm.Age, &tm.LastName)
 }
 ```
-### `Cache`
+## `Cache`
 业务但凡对性能有点要求，几乎都会考虑使用缓存。缓存大体上分成两类：本地缓存和分布式缓存，如`Redis`、`memecache`,详细设计请阅读 [cache服务的设计](doc/cache服务的设计.md)。
 ```go
 import (
@@ -84,7 +94,7 @@ func main() {
     assert.Equal(t, "value1", val)
 }
 ```
-### 微服务
+## 微服务
 微服务框架是服务于微服务架构的，微服务架构是指整个系统由多个组件组成，每一个组件都独立管理，组件之间通过网络来通信，微服务框架就是要解决这种架构下，组件之间的发现、通信、容错等问题，详细设计请阅读 [微服务框架设计](doc/微服务框架设计.md)。
 ```go
 // 使用 GROUP_ROUND_ROBIN 的策略，实现服务负载均衡，在context中设置要请求的group为"g-A"
